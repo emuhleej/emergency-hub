@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Household Emergency Hub</title>
+<style>
+  :root {
+    --ink: #453741;
+    --paper: #f6f4f1;
+    --card: #ffffff;
+    --line: #e6dfe1;
+    --muted: #8b7d85;
+    --teal: #47938a;        /* action shade of 8DC6BF */
+    --teal-dark: #397b73;
+    --teal-mid: #8dc6bf;
+    --teal-soft: #e7f2f0;
+    --plum: #584053;
+    --plum-soft: #ece5ea;
+    --amber: #c4841f;       /* text shade of FCBC66 */
+    --amber-mid: #fcbc66;
+    --amber-soft: #fdf1dd;
+    --red: #e0592f;         /* action shade of F97B4F */
+    --red-soft: #fdeae2;
+    --header: #584053;
+    --shadow: 0 1px 3px rgba(88,64,83,0.10);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 60px;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 0 12px; }
+
+  /* Header */
+  .top { background: var(--header); color: #fff; padding: 16px 0 14px; margin-bottom: 16px; }
+  .top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .top-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .back-btn {
+    display: none;
+    border: none; background: rgba(255,255,255,0.14); color: #fff;
+    border-radius: 9px; width: 36px; height: 36px;
+    font-size: 1.1rem; cursor: pointer; flex-shrink: 0;
+  }
+  body.subpage .back-btn { display: block; }
+  .top h1 { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .top h1 span { color: var(--teal-mid); }
+  .edit-toggle {
+    border: 1.5px solid rgba(255,255,255,0.35);
+    background: transparent; color: #fff;
+    border-radius: 8px; padding: 7px 16px;
+    font-size: 0.85rem; font-weight: 700; cursor: pointer; flex-shrink: 0;
+  }
+  .edit-toggle.on { background: #fff; color: var(--header); border-color: #fff; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Cover page */
+  .cover-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px; }
+  .cover-btn {
+    border: none;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 26px 14px 20px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    text-align: center;
+    font-family: inherit;
+  }
+  .cover-btn:active { background: var(--teal-soft); }
+  .cover-btn .ico {
+    width: 54px; height: 54px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 1.6rem;
+  }
+  .cover-btn.c-contacts .ico { background: var(--teal-soft); }
+  .cover-btn.c-medical .ico { background: var(--red-soft); }
+  .cover-btn.c-docs .ico { background: var(--amber-soft); }
+  .cover-btn.c-bia .ico { background: var(--plum-soft); }
+  .cover-btn .t { font-weight: 800; font-size: 1.02rem; color: var(--ink); }
+  .cover-btn .s { font-size: 0.76rem; color: var(--muted); margin-top: 3px; }
+
+  /* Owner divider */
+  .owner-band {
+    display: flex; align-items: center; gap: 10px;
+    margin: 24px 0 10px;
+  }
+  .owner-band:first-child { margin-top: 4px; }
+  .owner-chip {
+    font-size: 0.8rem; font-weight: 800;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 5px 14px; border-radius: 999px;
+  }
+  .owner-chip.em { background: var(--teal-soft); color: var(--teal); }
+  .owner-chip.hameed { background: var(--plum-soft); color: var(--plum); }
+  .owner-chip.bia { background: var(--amber-soft); color: var(--amber); }
+  .owner-band .rule { flex: 1; height: 1px; background: var(--line); }
+  .owner-band .add-btn { margin-left: auto; }
+
+  .search {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 16px;
+    background: var(--card);
+    color: var(--ink);
+    margin-bottom: 6px;
+    box-shadow: var(--shadow);
+  }
+  .search:focus { outline: 2px solid var(--teal); }
+
+  .add-btn {
+    display: none;
+    border: none; background: var(--teal); color: #fff;
+    border-radius: 7px; padding: 5px 13px;
+    font-size: 0.8rem; font-weight: 700; cursor: pointer;
+  }
+  body.editing .add-btn { display: inline-block; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 13px 14px;
+    margin-bottom: 9px;
+    box-shadow: var(--shadow);
+  }
+  .c-top { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    flex-shrink: 0;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--teal-soft); color: var(--teal);
+    font-weight: 800; font-size: 0.95rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .c-info { flex: 1; min-width: 0; }
+  .c-name { font-weight: 800; font-size: 1rem; }
+  .c-rel { color: var(--muted); font-size: 0.84rem; }
+  .c-notes { color: var(--muted); font-size: 0.82rem; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); white-space: pre-wrap; }
+  .c-actions { display: flex; flex-direction: column; gap: 7px; margin-top: 11px; }
+  .num-row { display: flex; align-items: center; gap: 7px; }
+  .num-label { flex: 1; min-width: 0; font-size: 0.85rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .num-label small { color: var(--muted); font-weight: 500; display: block; font-size: 0.72rem; }
+  .act {
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    text-decoration: none;
+    border-radius: 9px; font-weight: 700; font-size: 0.82rem;
+    min-height: 40px; min-width: 40px; padding: 0 13px;
+    border: none; cursor: pointer;
+  }
+  .act.call { background: var(--teal); color: #fff; }
+  .act.call:active { background: var(--teal-dark); }
+  .act.text { background: var(--teal-soft); color: var(--teal); }
+  .act svg { width: 14px; height: 14px; }
+  .row-edit { display: none; gap: 6px; }
+  body.editing .row-edit { display: flex; }
+  .icon-btn {
+    border: 1.5px solid var(--line);
+    background: var(--card);
+    border-radius: 8px;
+    width: 34px; height: 34px;
+    font-size: 0.9rem; cursor: pointer; color: var(--muted);
+  }
+  .icon-btn.del { color: var(--red); border-color: #f6cdbd; }
+  .mini { width: 27px; height: 27px; font-size: 0.75rem; }
+
+  /* Medical profile */
+  .person-card { border-left: 4px solid var(--teal); }
+  .person-card.hameed { border-left-color: var(--plum); }
+  .person-card.bia { border-left-color: var(--amber); }
+  .p-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .p-name { font-weight: 800; font-size: 1.05rem; }
+  .p-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .p-item { background: var(--paper); border-radius: 9px; padding: 8px 10px; }
+  .p-item .k { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 800; }
+  .p-item .v { font-size: 0.9rem; font-weight: 600; margin-top: 1px; white-space: pre-wrap; }
+  .p-item.warn { background: var(--red-soft); }
+  .p-item.warn .k { color: var(--red); }
+  .p-item.wide { grid-column: 1 / -1; }
+  .med-rows { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 6px; }
+  .med-rows .k-row { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 800; margin-bottom: 3px; }
+  .med-line { padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: 0.92rem; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+  .med-line:last-child { border-bottom: none; }
+  .med-line .dose { color: var(--muted); font-size: 0.84rem; text-align: right; flex-shrink: 0; }
+  .med-line .mnote { display: block; font-size: 0.76rem; color: var(--muted); }
+  .med-inline-edit { display: none; gap: 4px; margin-left: 8px; vertical-align: middle; }
+  body.editing .med-inline-edit { display: inline-flex; }
+  .add-med-inline {
+    display: none;
+    margin-top: 8px;
+    border: 1.5px dashed var(--line);
+    background: transparent; color: var(--teal);
+    border-radius: 8px; width: 100%; padding: 8px;
+    font-weight: 700; font-size: 0.82rem; cursor: pointer;
+  }
+  body.editing .add-med-inline { display: block; }
+  .setup-profile {
+    border: 1.5px dashed var(--line);
+    background: transparent; color: var(--teal);
+    border-radius: 12px; width: 100%; padding: 16px;
+    font-weight: 700; font-size: 0.88rem; cursor: pointer;
+    margin-bottom: 9px;
+  }
+
+  /* Documents */
+  .docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .doc-tile {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--shadow);
+  }
+  .doc-tile img { width: 100%; height: 92px; object-fit: cover; display: block; }
+  .doc-tile .pdf-face {
+    height: 92px; display: flex; align-items: center; justify-content: center;
+    background: var(--amber-soft); color: var(--amber);
+    font-weight: 800; font-size: 0.85rem; letter-spacing: 0.06em;
+  }
+  .doc-tile .doc-label { font-size: 0.74rem; padding: 7px 9px; font-weight: 700; word-break: break-word; }
+  .doc-tile .doc-tag { font-size: 0.66rem; color: var(--muted); padding: 0 9px 8px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+  .doc-open { position: absolute; inset: 0; }
+  .doc-ctl { position: absolute; top: 6px; right: 6px; display: none; gap: 4px; }
+  body.editing .doc-ctl { display: flex; }
+  .doc-ctl button {
+    border: none; border-radius: 6px; width: 27px; height: 27px;
+    cursor: pointer; font-size: 0.8rem;
+    background: rgba(24,36,48,0.75); color: #fff;
+  }
+  .doc-ctl button.d { background: var(--red); }
+  .upload-tile {
+    border: 2px dashed var(--line);
+    border-radius: 14px;
+    min-height: 130px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    color: var(--muted); font-size: 0.78rem; font-weight: 700;
+    cursor: pointer; background: transparent;
+  }
+  .upload-tile .plus { font-size: 1.5rem; color: var(--teal); line-height: 1; }
+  .upload-tile:active { background: var(--teal-soft); }
+  .notes-box {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--card);
+    padding: 12px 14px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: var(--ink);
+    min-height: 80px;
+    resize: vertical;
+    box-shadow: var(--shadow);
+  }
+  .notes-k { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 800; margin: 4px 0 5px; }
+  .storage-note { font-size: 0.72rem; color: var(--muted); margin-top: 14px; }
+
+  /* Modal */
+  .modal-bg {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(24,36,48,0.5);
+    z-index: 30;
+    align-items: flex-end; justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: 18px 18px 0 0;
+    padding: 20px 18px 30px;
+    width: 100%;
+    max-width: 680px;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  .modal h3 { font-size: 1.05rem; margin-bottom: 4px; }
+  .modal label { display: block; font-size: 0.76rem; font-weight: 800; color: var(--muted); margin: 12px 0 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .modal input, .modal textarea {
+    width: 100%;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 11px 12px;
+    font-size: 16px;
+    font-family: inherit;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .modal textarea { resize: vertical; min-height: 58px; }
+  .modal .btns { display: flex; gap: 8px; margin-top: 20px; }
+  .modal .btns button {
+    flex: 1; border: none; border-radius: 11px; padding: 14px;
+    font-size: 0.95rem; font-weight: 800; cursor: pointer;
+  }
+  .save { background: var(--teal); color: #fff; }
+  .cancel { background: var(--paper); color: var(--muted); border: 1.5px solid var(--line) !important; }
+
+  .empty { color: var(--muted); font-size: 0.85rem; padding: 6px 2px; }
+  input[type="file"] { display: none; }
+  .toast {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    background: var(--header); color: #fff;
+    border-radius: 10px; padding: 10px 18px;
+    font-size: 0.85rem; font-weight: 700;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    z-index: 40;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="wrap">
+    <div class="top-left">
+      <button class="back-btn" onclick="showPage('home')">&#8592;</button>
+      <h1 id="pageTitle">Household <span>Emergency Hub</span></h1>
+    </div>
+    <button class="edit-toggle" id="editToggle" onclick="toggleEdit()">Edit</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- COVER -->
+  <div class="page active" id="page-home">
+    <div class="cover-grid">
+      <button class="cover-btn c-contacts" onclick="showPage('contacts')">
+        <div class="ico">&#128222;</div>
+        <div class="t">Contacts</div>
+        <div class="s">People &amp; work numbers</div>
+      </button>
+      <button class="cover-btn c-medical" onclick="showPage('medical')">
+        <div class="ico">&#10010;</div>
+        <div class="t">Medical</div>
+        <div class="s">Allergies &amp; medications</div>
+      </button>
+      <button class="cover-btn c-docs" onclick="showPage('docs')">
+        <div class="ico">&#128196;</div>
+        <div class="t">Documents</div>
+        <div class="s">Insurance cards &amp; IDs</div>
+      </button>
+      <button class="cover-btn c-bia" onclick="showPage('bia')">
+        <div class="ico">&#128021;</div>
+        <div class="t">Bia</div>
+        <div class="s">Vet, meds &amp; records</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTACTS -->
+  <div class="page" id="page-contacts">
+    <input class="search" id="searchBox" placeholder="Search contacts…" oninput="renderContacts()">
+
+    <div class="owner-band">
+      <span class="owner-chip em">Em</span>
+      <span class="rule"></span>
+      <button class="add-btn" onclick="openContactForm('contacts','Em')">+ Add</button>
+    </div>
+    <div id="contacts-Em"></div>
+
+    <div class="owner-band">
+      <span class="owner-chip hameed">Hameed</span>
+      <span class="rule"></span>
+      <button class="add-btn" onclick="openContactForm('contacts','Hameed')">+ Add</button>
+    </div>
+    <div id="contacts-Hameed"></div>
+  </div>
+
+  <!-- MEDICAL -->
+  <div class="page" id="page-medical">
+    <div class="owner-band">
+      <span class="owner-chip em">Em</span>
+      <span class="rule"></span>
+    </div>
+    <div id="medical-Em"></div>
+
+    <div class="owner-band">
+      <span class="owner-chip hameed">Hameed</span>
+      <span class="rule"></span>
+    </div>
+    <div id="medical-Hameed"></div>
+  </div>
+
+  <!-- DOCUMENTS -->
+  <div class="page" id="page-docs">
+    <div class="owner-band">
+      <span class="owner-chip em">Em</span>
+      <span class="rule"></span>
+    </div>
+    <div class="docs-grid" id="docs-Em"></div>
+    <div class="notes-k">Em — policy numbers &amp; notes</div>
+    <textarea class="notes-box" id="notes-Em" placeholder="Policy numbers, member IDs, group numbers…" onchange="saveNotes('Em')"></textarea>
+
+    <div class="owner-band">
+      <span class="owner-chip hameed">Hameed</span>
+      <span class="rule"></span>
+    </div>
+    <div class="docs-grid" id="docs-Hameed"></div>
+    <div class="notes-k">Hameed — policy numbers &amp; notes</div>
+    <textarea class="notes-box" id="notes-Hameed" placeholder="Policy numbers, member IDs, group numbers…" onchange="saveNotes('Hameed')"></textarea>
+
+    <div class="storage-note">Saved on this device in this browser. Screenshots of cards upload fastest. Add them once on each phone.</div>
+  </div>
+
+  <!-- BIA -->
+  <div class="page" id="page-bia">
+    <div class="owner-band">
+      <span class="owner-chip bia">Vet Contacts</span>
+      <span class="rule"></span>
+      <button class="add-btn" onclick="openContactForm('vet','Bia')">+ Add</button>
+    </div>
+    <div id="contacts-Bia"></div>
+
+    <div class="owner-band">
+      <span class="owner-chip bia">Bia's Info</span>
+      <span class="rule"></span>
+    </div>
+    <div id="medical-Bia"></div>
+
+    <div class="owner-band">
+      <span class="owner-chip bia">Records</span>
+      <span class="rule"></span>
+    </div>
+    <div class="docs-grid" id="docs-Bia"></div>
+    <div class="notes-k">Bia — pet insurance &amp; notes</div>
+    <textarea class="notes-box" id="notes-Bia" placeholder="Pet insurance policy, microchip company, food brand, boarding info…" onchange="saveNotes('Bia')"></textarea>
+  </div>
+
+</div>
+
+<input type="file" id="fileInput" accept="image/*,application/pdf" onchange="handleFile(event)">
+
+<!-- Contact form -->
+<div class="modal-bg" id="formModal">
+  <div class="modal">
+    <h3 id="formTitle">Add contact</h3>
+    <label>Name</label>
+    <input id="f-name" placeholder="e.g. Mom, Dr. Patel, Boss">
+    <label>Relationship / role</label>
+    <input id="f-rel" placeholder="e.g. Mother, Primary care, Charge nurse">
+    <label>Phone 1</label>
+    <input id="f-phone" type="tel" placeholder="e.g. 865-555-0123">
+    <label>Phone 1 label (optional)</label>
+    <input id="f-phone-label" placeholder="e.g. Cell, Main line">
+    <label>Phone 2 (optional)</label>
+    <input id="f-phone2" type="tel" placeholder="e.g. after-hours line">
+    <label>Phone 2 label (optional)</label>
+    <input id="f-phone2-label" placeholder="e.g. After hours">
+    <label>Notes (optional)</label>
+    <textarea id="f-notes" placeholder="Address, hours, account #, unit/floor…"></textarea>
+    <div class="btns">
+      <button class="cancel" onclick="closeModal('formModal')">Cancel</button>
+      <button class="save" onclick="saveContact()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Profile form -->
+<div class="modal-bg" id="profileModal">
+  <div class="modal">
+    <h3 id="profileTitle">Edit profile</h3>
+    <label>Date of birth (optional)</label>
+    <input id="p-dob" placeholder="e.g. 03/14/1992">
+    <label id="p-blood-label">Blood type (optional)</label>
+    <input id="p-blood" placeholder="e.g. O+">
+    <label>Allergies</label>
+    <textarea id="p-allergies" placeholder="e.g. Penicillin — hives. Write None if none."></textarea>
+    <label>Conditions (optional)</label>
+    <textarea id="p-conditions" placeholder="e.g. Hypertension, asthma"></textarea>
+    <label>Other notes (optional)</label>
+    <textarea id="p-notes" placeholder="e.g. Preferred hospital, primary care doctor"></textarea>
+    <div class="btns">
+      <button class="cancel" onclick="closeModal('profileModal')">Cancel</button>
+      <button class="save" onclick="saveProfile()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Med form -->
+<div class="modal-bg" id="medModal">
+  <div class="modal">
+    <h3 id="medTitle">Add medication</h3>
+    <label>Medication</label>
+    <input id="m-name" placeholder="e.g. Lisinopril">
+    <label>Dose / schedule</label>
+    <input id="m-dose" placeholder="e.g. 10 mg daily, AM">
+    <label>Notes (optional)</label>
+    <input id="m-notes" placeholder="e.g. take with food, refill at CVS">
+    <div class="btns">
+      <button class="cancel" onclick="closeModal('medModal')">Cancel</button>
+      <button class="save" onclick="saveMed()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Doc rename form -->
+<div class="modal-bg" id="docModal">
+  <div class="modal">
+    <h3>Rename document</h3>
+    <label>Name</label>
+    <input id="d-name" placeholder="e.g. BCBS card — front">
+    <label>Tag (optional)</label>
+    <input id="d-tag" placeholder="e.g. Health, Dental, Vision, Vet">
+    <div class="btns">
+      <button class="cancel" onclick="closeModal('docModal')">Cancel</button>
+      <button class="save" onclick="saveDocMeta()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- storage (localStorage with in-memory fallback) ----------
+const mem = {};
+const store = {
+  get(k, fallback) {
+    try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; }
+    catch(e) { return mem[k] !== undefined ? mem[k] : fallback; }
+  },
+  set(k, v) {
+    try { localStorage.setItem(k, JSON.stringify(v)); mem[k] = v; }
+    catch(e) {
+      mem[k] = v;
+      if (e && (e.name === 'QuotaExceededError' || e.code === 22)) alert('Storage is full — try a smaller photo or remove an old document.');
+    }
+  }
+};
+
+const OWNERS = ['Em', 'Hameed', 'Bia'];
+const PROFILE_DEFAULT = { dob:'', blood:'', allergies:'', conditions:'', notes:'' };
+
+let data = {
+  contacts: store.get('eh3_contacts', []),          // {owner, name, rel, phone, phoneLabel, phone2, phone2Label, notes}
+  profiles: store.get('eh3_profiles', {}),          // {Em: {...}, Hameed: {...}, Bia: {...}}
+  meds: store.get('eh3_meds', []),                  // {owner, name, dose, notes}
+  docs: store.get('eh3_docs', []),                  // {owner, name, tag, type, data}
+};
+
+function persist(key) {
+  const map = { contacts:'eh3_contacts', profiles:'eh3_profiles', meds:'eh3_meds', docs:'eh3_docs' };
+  store.set(map[key], data[key]);
+}
+
+let editing = false;
+let contactIndex = -1, contactOwner = null, contactKind = 'contacts';
+let profileOwner = null;
+let medIndex = -1, medOwner = null;
+let docIndex = -1, uploadOwner = null;
+
+// ---------- helpers ----------
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function jsq(s) { return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+function telHref(num) { return 'tel:' + String(num).replace(/[^\d+]/g, ''); }
+function smsHref(num) { return 'sms:' + String(num).replace(/[^\d+]/g, ''); }
+function initials(name) { return (name || '?').trim().split(/\s+/).slice(0,2).map(w => w[0].toUpperCase()).join(''); }
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('show'), 1600);
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+
+const PHONE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"/></svg>';
+const MSG_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>';
+
+// ---------- pages ----------
+const PAGE_TITLES = {
+  home: 'Household <span>Emergency Hub</span>',
+  contacts: 'Contacts',
+  medical: 'Medical',
+  docs: 'Documents',
+  bia: 'Bia'
+};
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('pageTitle').innerHTML = PAGE_TITLES[name];
+  document.body.classList.toggle('subpage', name !== 'home');
+  window.scrollTo(0, 0);
+}
+
+// ---------- edit mode ----------
+function toggleEdit() {
+  editing = !editing;
+  document.body.classList.toggle('editing', editing);
+  const btn = document.getElementById('editToggle');
+  btn.textContent = editing ? 'Done' : 'Edit';
+  btn.classList.toggle('on', editing);
+}
+
+function dial(url) {
+  // Try every route out of an embed frame, in order of reliability
+  try { window.top.location.href = url; return; } catch(e) {}
+  try { const w = window.open(url, '_top'); if (w !== null) return; } catch(e) {}
+  try { const w = window.open(url, '_blank'); if (w !== null) return; } catch(e) {}
+  window.location.href = url;
+}
+
+// ---------- contacts ----------
+function numRow(num, label) {
+  return '<div class="num-row">' +
+    '<span class="num-label">' + esc(num) + (label ? '<small>' + esc(label) + '</small>' : '') + '</span>' +
+    '<a class="act call" href="' + telHref(num) + '" target="_top" onclick="dial(\'' + telHref(num) + '\');return false;">' + PHONE_SVG + 'Call</a>' +
+    '<a class="act text" href="' + smsHref(num) + '" target="_top" onclick="dial(\'' + smsHref(num) + '\');return false;">' + MSG_SVG + 'Message</a>' +
+    '</div>';
+}
+function contactCard(c, i, kind) {
+  let rows = numRow(c.phone, c.phoneLabel);
+  if (c.phone2) rows += numRow(c.phone2, c.phone2Label);
+  return '<div class="card">' +
+    '<div class="c-top">' +
+    '<div class="avatar">' + esc(initials(c.name)) + '</div>' +
+    '<div class="c-info"><div class="c-name">' + esc(c.name) + '</div><div class="c-rel">' + esc(c.rel) + '</div></div>' +
+    '<div class="row-edit">' +
+    '<button class="icon-btn" onclick="openContactForm(\'' + kind + '\',\'' + jsq(c.owner) + '\',' + i + ')">&#9998;</button>' +
+    '<button class="icon-btn del" onclick="delContact(' + i + ')">&#10005;</button>' +
+    '</div></div>' +
+    '<div class="c-actions">' + rows + '</div>' +
+    (c.notes ? '<div class="c-notes">' + esc(c.notes) + '</div>' : '') +
+    '</div>';
+}
+function matchesSearch(c, q) {
+  if (!q) return true;
+  return [c.name, c.rel, c.phone, c.phone2, c.notes].join(' ').toLowerCase().includes(q);
+}
+function renderContacts() {
+  const qEl = document.getElementById('searchBox');
+  const q = qEl ? qEl.value.trim().toLowerCase() : '';
+  OWNERS.forEach(owner => {
+    const el = document.getElementById('contacts-' + owner);
+    if (!el) return;
+    const kind = owner === 'Bia' ? 'vet' : 'contacts';
+    const useQ = owner === 'Bia' ? '' : q; // search box only lives on the contacts page
+    const items = data.contacts
+      .map((c, i) => ({ c, i }))
+      .filter(x => x.c.owner === owner && matchesSearch(x.c, useQ));
+    if (!items.length) {
+      const hints = {
+        Em: q ? 'No matches.' : 'No contacts yet — tap Edit, then + Add. Family, boss, unit desk line.',
+        Hameed: q ? 'No matches.' : 'No contacts yet — tap Edit, then + Add.',
+        Bia: 'Add the regular clinic and an emergency/after-hours vet.'
+      };
+      el.innerHTML = '<div class="empty">' + hints[owner] + '</div>';
+      return;
+    }
+    el.innerHTML = items.map(x => contactCard(x.c, x.i, kind)).join('');
+  });
+}
+function openContactForm(kind, owner, index = -1) {
+  contactKind = kind; contactOwner = owner; contactIndex = index;
+  const c = index >= 0 ? data.contacts[index] : { name:'', rel:'', phone:'', phoneLabel:'', phone2:'', phone2Label:'', notes:'' };
+  const who = owner === 'Bia' ? 'Bia (vet)' : owner;
+  document.getElementById('formTitle').textContent = (index >= 0 ? 'Edit' : 'Add') + ' contact — ' + who;
+  document.getElementById('f-name').value = c.name;
+  document.getElementById('f-rel').value = c.rel;
+  document.getElementById('f-phone').value = c.phone;
+  document.getElementById('f-phone-label').value = c.phoneLabel || '';
+  document.getElementById('f-phone2').value = c.phone2 || '';
+  document.getElementById('f-phone2-label').value = c.phone2Label || '';
+  document.getElementById('f-notes').value = c.notes || '';
+  openModal('formModal');
+}
+function saveContact() {
+  const entry = {
+    owner: contactOwner,
+    name: document.getElementById('f-name').value.trim(),
+    rel: document.getElementById('f-rel').value.trim(),
+    phone: document.getElementById('f-phone').value.trim(),
+    phoneLabel: document.getElementById('f-phone-label').value.trim(),
+    phone2: document.getElementById('f-phone2').value.trim(),
+    phone2Label: document.getElementById('f-phone2-label').value.trim(),
+    notes: document.getElementById('f-notes').value.trim()
+  };
+  if (!entry.name || !entry.phone) { alert('Name and phone number are required.'); return; }
+  if (contactIndex >= 0) { entry.owner = data.contacts[contactIndex].owner; data.contacts[contactIndex] = entry; }
+  else data.contacts.push(entry);
+  persist('contacts');
+  renderContacts();
+  closeModal('formModal');
+}
+function delContact(i) {
+  if (!confirm('Remove ' + data.contacts[i].name + '?')) return;
+  data.contacts.splice(i, 1);
+  persist('contacts');
+  renderContacts();
+}
+
+// ---------- medical profiles + meds ----------
+function renderMedical() {
+  OWNERS.forEach(owner => {
+    const el = document.getElementById('medical-' + owner);
+    if (!el) return;
+    const p = data.profiles[owner];
+    const cls = owner.toLowerCase();
+    if (!p) {
+      el.innerHTML = '<button class="setup-profile" onclick="openProfileForm(\'' + owner + '\')">+ Set up ' + owner + '\u2019s profile</button>';
+      return;
+    }
+    const personMeds = data.meds.map((m, mi) => ({ ...m, _i: mi })).filter(m => m.owner === owner);
+    const medHtml = personMeds.length
+      ? '<div class="med-rows"><div class="k-row">Medications</div>' +
+        personMeds.map(m =>
+          '<div class="med-line"><span>' + esc(m.name) +
+          (m.notes ? '<span class="mnote">' + esc(m.notes) + '</span>' : '') +
+          '<span class="med-inline-edit">' +
+          '<button class="icon-btn mini" onclick="openMedForm(\'' + owner + '\',' + m._i + ')">&#9998;</button>' +
+          '<button class="icon-btn del mini" onclick="delMed(' + m._i + ')">&#10005;</button></span>' +
+          '</span><span class="dose">' + esc(m.dose) + '</span></div>'
+        ).join('') + '</div>'
+      : '<div class="med-rows"><div class="k-row">Medications</div><div class="empty" style="padding:2px 0">None listed.</div></div>';
+    el.innerHTML = '<div class="card person-card ' + cls + '">' +
+      '<div class="p-head"><div class="p-name">' + esc(owner) + '</div>' +
+      '<div class="row-edit"><button class="icon-btn" onclick="openProfileForm(\'' + owner + '\')">&#9998;</button></div></div>' +
+      '<div class="p-grid">' +
+      (p.dob ? '<div class="p-item"><div class="k">DOB</div><div class="v">' + esc(p.dob) + '</div></div>' : '') +
+      (p.blood ? '<div class="p-item"><div class="k">' + (owner === 'Bia' ? 'Microchip #' : 'Blood type') + '</div><div class="v">' + esc(p.blood) + '</div></div>' : '') +
+      '<div class="p-item warn wide"><div class="k">Allergies</div><div class="v">' + esc(p.allergies || 'Not listed') + '</div></div>' +
+      (p.conditions ? '<div class="p-item wide"><div class="k">Conditions</div><div class="v">' + esc(p.conditions) + '</div></div>' : '') +
+      (p.notes ? '<div class="p-item wide"><div class="k">Notes</div><div class="v">' + esc(p.notes) + '</div></div>' : '') +
+      '</div>' +
+      medHtml +
+      '<button class="add-med-inline" onclick="openMedForm(\'' + owner + '\')">+ Add medication for ' + esc(owner) + '</button>' +
+      '</div>';
+  });
+}
+function openProfileForm(owner) {
+  profileOwner = owner;
+  const p = data.profiles[owner] || PROFILE_DEFAULT;
+  document.getElementById('profileTitle').textContent = owner + '\u2019s profile';
+  document.getElementById('p-blood-label').textContent = owner === 'Bia' ? 'Microchip # (optional)' : 'Blood type (optional)';
+  document.getElementById('p-blood').placeholder = owner === 'Bia' ? 'e.g. 985112004567890' : 'e.g. O+';
+  document.getElementById('p-dob').value = p.dob || '';
+  document.getElementById('p-blood').value = p.blood || '';
+  document.getElementById('p-allergies').value = p.allergies || '';
+  document.getElementById('p-conditions').value = p.conditions || '';
+  document.getElementById('p-notes').value = p.notes || '';
+  openModal('profileModal');
+}
+function saveProfile() {
+  data.profiles[profileOwner] = {
+    dob: document.getElementById('p-dob').value.trim(),
+    blood: document.getElementById('p-blood').value.trim(),
+    allergies: document.getElementById('p-allergies').value.trim(),
+    conditions: document.getElementById('p-conditions').value.trim(),
+    notes: document.getElementById('p-notes').value.trim()
+  };
+  persist('profiles');
+  renderMedical();
+  closeModal('profileModal');
+}
+function openMedForm(owner, index = -1) {
+  medOwner = owner; medIndex = index;
+  const m = index >= 0 ? data.meds[index] : { name:'', dose:'', notes:'' };
+  document.getElementById('medTitle').textContent = (index >= 0 ? 'Edit' : 'Add') + ' medication — ' + owner;
+  document.getElementById('m-name').value = m.name;
+  document.getElementById('m-dose').value = m.dose;
+  document.getElementById('m-notes').value = m.notes || '';
+  openModal('medModal');
+}
+function saveMed() {
+  const m = {
+    owner: medOwner,
+    name: document.getElementById('m-name').value.trim(),
+    dose: document.getElementById('m-dose').value.trim(),
+    notes: document.getElementById('m-notes').value.trim()
+  };
+  if (!m.name) { alert('Medication name is required.'); return; }
+  if (medIndex >= 0) { m.owner = data.meds[medIndex].owner; data.meds[medIndex] = m; }
+  else data.meds.push(m);
+  persist('meds');
+  renderMedical();
+  closeModal('medModal');
+}
+function delMed(i) {
+  if (!confirm('Remove ' + data.meds[i].name + '?')) return;
+  data.meds.splice(i, 1);
+  persist('meds');
+  renderMedical();
+}
+
+// ---------- documents ----------
+function renderDocs() {
+  OWNERS.forEach(owner => {
+    const grid = document.getElementById('docs-' + owner);
+    if (!grid) return;
+    const tiles = data.docs
+      .map((d, i) => ({ d, i }))
+      .filter(x => x.d.owner === owner)
+      .map(({ d, i }) => {
+        const face = d.type === 'pdf'
+          ? '<div class="pdf-face">PDF</div>'
+          : '<img src="' + d.data + '" alt="' + esc(d.name) + '">';
+        return '<div class="doc-tile">' + face +
+          '<div class="doc-label">' + esc(d.name) + '</div>' +
+          (d.tag ? '<div class="doc-tag">' + esc(d.tag) + '</div>' : '') +
+          '<a class="doc-open" href="#" onclick="openDoc(' + i + ');return false;" aria-label="Open ' + esc(d.name) + '"></a>' +
+          '<span class="doc-ctl">' +
+          '<button onclick="openDocMeta(' + i + ');event.stopPropagation();">&#9998;</button>' +
+          '<button class="d" onclick="delDoc(' + i + ');event.stopPropagation();">&#10005;</button>' +
+          '</span></div>';
+      });
+    tiles.push('<button class="upload-tile" onclick="pickFile(\'' + owner + '\')"><span class="plus">+</span>Add photo or PDF</button>');
+    grid.innerHTML = tiles.join('');
+  });
+}
+function pickFile(owner) {
+  uploadOwner = owner;
+  document.getElementById('fileInput').click();
+}
+function handleFile(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  if (file.size > 3 * 1024 * 1024) { alert('That file is over 3 MB. A screenshot or smaller photo saves more reliably.'); ev.target.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = () => {
+    data.docs.push({
+      owner: uploadOwner,
+      name: file.name,
+      tag: '',
+      type: file.type === 'application/pdf' ? 'pdf' : 'image',
+      data: reader.result
+    });
+    persist('docs');
+    renderDocs();
+  };
+  reader.readAsDataURL(file);
+  ev.target.value = '';
+}
+function openDoc(i) {
+  const d = data.docs[i];
+  const w = window.open('about:blank');
+  if (!w) { toast('Pop-up blocked — allow pop-ups to view'); return; }
+  if (d.type === 'pdf') {
+    w.document.write('<iframe src="' + d.data + '" style="border:0;width:100vw;height:100vh"></iframe>');
+  } else {
+    w.document.write('<body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="' + d.data + '" style="max-width:100%;max-height:100vh"></body>');
+  }
+}
+function openDocMeta(i) {
+  docIndex = i;
+  document.getElementById('d-name').value = data.docs[i].name;
+  document.getElementById('d-tag').value = data.docs[i].tag || '';
+  openModal('docModal');
+}
+function saveDocMeta() {
+  data.docs[docIndex].name = document.getElementById('d-name').value.trim() || data.docs[docIndex].name;
+  data.docs[docIndex].tag = document.getElementById('d-tag').value.trim();
+  persist('docs');
+  renderDocs();
+  closeModal('docModal');
+}
+function delDoc(i) {
+  if (!confirm('Remove ' + data.docs[i].name + '?')) return;
+  data.docs.splice(i, 1);
+  persist('docs');
+  renderDocs();
+}
+
+// ---------- notes ----------
+function saveNotes(owner) {
+  store.set('eh3_notes_' + owner, document.getElementById('notes-' + owner).value);
+}
+OWNERS.forEach(owner => {
+  const el = document.getElementById('notes-' + owner);
+  if (el) el.value = store.get('eh3_notes_' + owner, '');
+});
+
+// ---------- init ----------
+renderContacts();
+renderMedical();
+renderDocs();
+</script>
+</body>
+</html>
