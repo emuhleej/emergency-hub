@@ -1,20 +1,36 @@
 # Household Emergency Hub
 
-This is a small web app you can host and embed in Notion. It keeps household contacts, medical notes, documents, and Bia's vet info in one phone-friendly view.
+A shared emergency info app for Em & Hameed - contacts, medical profiles,
+doctors, insurance documents, and pet records with vaccine uploads, synced
+in real time between both phones via Firebase.
 
-## Use It In Notion
+## Entry code
+The app opens to a keypad lock screen. Code: **2580**.
+It stays unlocked until the app is fully closed. The code is never stored
+in the page in readable form, and your Firestore data path is derived from
+it - the wrong code can't reach the data.
 
-1. Upload this folder to GitHub Pages, Netlify, or Cloudflare Pages.
-2. Copy the public website URL.
-3. In Notion, type `/embed`.
-4. Paste the public URL and choose `Embed`.
+## Pages
+- **Contacts** - people & work numbers, split Em / Hameed, with one-tap
+  Call / Text / Copy and search
+- **Medical** - profiles (DOB, blood type, allergies, conditions),
+  medications, and each person's doctors
+- **Documents** - insurance card photos/PDFs plus policy-number notes,
+  per person
+- **Pets** - shared vet contacts, then a card per pet: profile, microchip,
+  meds, vaccine & record uploads with Share
 
-## Contact Buttons
+## Everyday use
+- Tap **Edit** in the header to reveal all add/rename/delete controls;
+  **Done** locks it back to view mode.
+- Photos are compressed automatically on upload so they sync fast.
+- The header pill shows sync status: **Local**, **Synced**, or **Sync error**.
+- Changes made on one phone appear on the other within seconds once
+  Firebase setup (DEPLOY.md Part 2) is complete.
+- Add the page to both home screens (Safari: Share -> Add to Home Screen)
+  so it opens fullscreen like an app.
 
-Each saved phone number has direct `Call` and `Message` buttons. On a phone, these open the dialer or text-message app without needing copy/paste.
-
-## Editing
-
-Tap `Edit`, then use `+ Add` to add contacts, profiles, medications, and documents.
-
-Changes are saved on the device/browser that opens the app. For emergency use, add the most important contacts on each phone where you plan to use it.
+## Files
+- `index.html` - the entire app, self-contained, Firebase config included
+- `DEPLOY.md` - GitHub Pages + Firebase setup steps
+- `.nojekyll` - tells GitHub Pages to serve files as-is
