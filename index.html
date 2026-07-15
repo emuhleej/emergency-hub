@@ -560,7 +560,7 @@
     <div class="top-left">
       <button class="back-btn" onclick="showPage('home')">&#8592;</button>
       <h1 id="pageTitle">Emergency <em>Hub</em></h1>
-      <span class="sync-pill" id="syncPill">Local</span>
+      <span class="sync-pill" id="syncPill" onclick="explainSync()" style="cursor:pointer;">Local</span>
     </div>
     <button class="edit-toggle" id="editToggle" onclick="toggleEdit()">Edit</button>
   </div>
@@ -827,12 +827,12 @@
    (everything saves to this device's browser instead).
    ========================================================= */
 const firebaseConfig = {
-  apiKey: "AIzaSyBJpoiiJrJHXjS7mYc_Geb5OfFrOEnaAcY",
-  authDomain: "emergency-contact-hub.firebaseapp.com",
-  projectId: "emergency-contact-hub",
-  storageBucket: "emergency-contact-hub.firebasestorage.app",
-  messagingSenderId: "124174203616",
-  appId: "1:124174203616:web:d50691c55c1f5f517eee85"
+  apiKey: "AIzaSyCjTtCmdY57CaFolPP7OwzlzCkqtDZu6Zo",
+  authDomain: "emergency-hub-b19b2.firebaseapp.com",
+  projectId: "emergency-hub-b19b2",
+  storageBucket: "emergency-hub-b19b2.firebasestorage.app",
+  messagingSenderId: "274616015312",
+  appId: "1:274616015312:web:c643ed312dea18cc0201d5"
 };
 const HID_BASE = "plum-beagle-7734-tn";
 const PIN_SALT = "ehub-plum-2026";
@@ -887,13 +887,24 @@ function cacheLocal(key) { store.set(LOCAL_KEYS[key], data[key]); }
 // ---------- Firebase ----------
 let fb = null;
 
-function setSync(state) {
+let lastSyncError = null;
+function setSync(state, err) {
   const pill = document.getElementById('syncPill');
   if (!pill) return;
+  if (err) lastSyncError = err;
   pill.classList.remove('synced', 'error');
   if (state === 'synced') { pill.textContent = 'Synced'; pill.classList.add('synced'); }
   else if (state === 'error') { pill.textContent = 'Sync error'; pill.classList.add('error'); }
   else { pill.textContent = 'Local'; }
+}
+function explainSync() {
+  if (!lastSyncError) { alert('No sync problem recorded. Pill: ' + document.getElementById('syncPill').textContent); return; }
+  const code = lastSyncError.code || '';
+  let hint = '';
+  if (code.indexOf('permission-denied') !== -1) hint = '\n\nLikely fix: enable Anonymous sign-in (Authentication -> Sign-in method) and confirm the rules are published.';
+  else if (code.indexOf('not-found') !== -1 || code.indexOf('failed-precondition') !== -1) hint = '\n\nLikely fix: the Firestore database has not been created yet (Build -> Firestore Database -> Create database).';
+  else if (code.indexOf('unavailable') !== -1) hint = '\n\nLikely a network issue - check the connection and reload.';
+  alert('Firebase says:\n' + (lastSyncError.code || '') + '\n' + (lastSyncError.message || lastSyncError) + hint);
 }
 
 function configLooksReal() {
@@ -913,7 +924,7 @@ async function initFirebase() {
     try {
       const auM = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
       await auM.signInAnonymously(auM.getAuth(app));
-    } catch (e) { console.warn('Anonymous auth unavailable:', e && e.code); }
+    } catch (e) { console.warn('Anonymous auth unavailable:', e && e.code); setSync('error', e); }
 
     fb = {
       db,
@@ -933,7 +944,7 @@ async function initFirebase() {
         renderAll();
       }
       setSync('synced');
-    }, err => { console.error(err); setSync('error'); });
+    }, err => { console.error(err); setSync('error', err); });
 
     fb.onSnapshot(fb.filesCol, snap => {
       const docs = [], petdocs = [];
@@ -947,10 +958,10 @@ async function initFirebase() {
       cacheLocal('docs'); cacheLocal('petdocs');
       renderDocs(); renderPets();
       setSync('synced');
-    }, err => { console.error(err); setSync('error'); });
+    }, err => { console.error(err); setSync('error', err); });
   } catch (e) {
     console.error('Firebase init failed:', e);
-    setSync('error');
+    setSync('error', e);
   }
 }
 
@@ -958,16 +969,16 @@ async function initFirebase() {
 function bootstrapUpload() {
   const payload = {};
   CORE_KEYS.forEach(k => payload[k] = data[k]);
-  fb.setDoc(fb.coreRef, payload, { merge: true }).catch(err => { console.error(err); setSync('error'); });
+  fb.setDoc(fb.coreRef, payload, { merge: true }).catch(err => { console.error(err); setSync('error', err); });
   [...data.docs, ...data.petdocs].forEach(f => {
-    fb.setDoc(fb.fileRef(f.id), f).catch(err => { console.error(err); setSync('error'); });
+    fb.setDoc(fb.fileRef(f.id), f).catch(err => { console.error(err); setSync('error', err); });
   });
 }
 
 function persist(key) {
   cacheLocal(key);
   if (fb && CORE_KEYS.indexOf(key) !== -1) {
-    fb.setDoc(fb.coreRef, { [key]: data[key] }, { merge: true }).catch(err => { console.error(err); setSync('error'); });
+    fb.setDoc(fb.coreRef, { [key]: data[key] }, { merge: true }).catch(err => { console.error(err); setSync('error', err); });
   }
 }
 
@@ -1458,7 +1469,7 @@ async function handleFile(ev) {
   // optimistic local add; the snapshot will confirm
   (entry.kind === 'petdoc' ? data.petdocs : data.docs).push(entry);
   cacheLocal(entry.kind === 'petdoc' ? 'petdocs' : 'docs');
-  if (fb) fb.setDoc(fb.fileRef(entry.id), entry).catch(err => { console.error(err); setSync('error'); toast('Upload failed to sync'); });
+  if (fb) fb.setDoc(fb.fileRef(entry.id), entry).catch(err => { console.error(err); setSync('error', err); toast('Upload failed to sync'); });
   renderDocs(); renderPets();
 }
 function getDoc(collection, i) { return collection === 'docs' ? data.docs[i] : data.petdocs[i]; }
@@ -1572,7 +1583,7 @@ function saveDocMeta() {
   d.name = document.getElementById('d-name').value.trim() || d.name;
   d.tag = document.getElementById('d-tag').value.trim();
   cacheLocal(docCollection);
-  if (fb) fb.setDoc(fb.fileRef(d.id), { name: d.name, tag: d.tag }, { merge: true }).catch(err => { console.error(err); setSync('error'); });
+  if (fb) fb.setDoc(fb.fileRef(d.id), { name: d.name, tag: d.tag }, { merge: true }).catch(err => { console.error(err); setSync('error', err); });
   renderDocs();
   renderPets();
   closeModal('docModal');
@@ -1583,7 +1594,7 @@ function delDoc(collection, i) {
   if (collection === 'docs') data.docs.splice(i, 1);
   else data.petdocs.splice(i, 1);
   cacheLocal(collection);
-  if (fb) fb.deleteDoc(fb.fileRef(d.id)).catch(err => { console.error(err); setSync('error'); });
+  if (fb) fb.deleteDoc(fb.fileRef(d.id)).catch(err => { console.error(err); setSync('error', err); });
   renderDocs();
   renderPets();
 }
