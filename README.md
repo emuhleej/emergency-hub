@@ -5,7 +5,7 @@ doctors, insurance documents, and pet records with vaccine uploads, synced
 in real time between both phones via Firebase.
 
 ## Entry code
-The app opens to a keypad lock screen. Code: **2580**.
+The app opens to a keypad lock screen. Code: ****.
 It stays unlocked until the app is fully closed. The code is never stored
 in the page in readable form, and your Firestore data path is derived from
 it - the wrong code can't reach the data.
