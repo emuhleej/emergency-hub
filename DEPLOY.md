@@ -6,7 +6,8 @@ than usual.
 ## Part 1 - GitHub Pages
 
 1. Create a new GitHub repository (e.g. `emergency-hub`).
-2. Upload `index.html` and `.nojekyll` to the repository root.
+2. Upload ALL files to the repository root: `index.html`, `sw.js`,
+   `manifest.json`, the three `.png` icons, and `.nojekyll`.
 3. Repo **Settings -> Pages -> Source**: select `main` branch, `/ (root)`, Save.
 4. The app goes live at `https://<username>.github.io/emergency-hub/`
    within a minute or two.
@@ -57,3 +58,5 @@ entered beforehand is lost.
   GitHub Pages URL and using the same entry code.
 - Forgot to test: Call/Text/Share buttons need the real browser -
   they're blocked in preview sandboxes, never on GitHub Pages.
+- After updating files, the app may show the old version once - close it
+  fully and reopen (the offline cache refreshes in the background).

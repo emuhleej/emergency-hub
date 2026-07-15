@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Emergency Hub</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#584053">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Emergency">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -238,7 +244,7 @@
   .person-card { position: relative; overflow: hidden; }
   .person-card::before {
     content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
-    background: var(--teal);
+    background: var(--pc, var(--teal));
   }
   .person-card.hameed::before { background: var(--plum); }
   .person-card.pet::before { background: var(--amber-mid); }
@@ -484,6 +490,57 @@
   }
   .toast.show { opacity: 1; }
 
+  .sync-pill.offline { background: rgba(252,188,102,0.3); color: #ffe1b3; }
+
+  .cover-btn.c-responder { grid-column: 1 / -1; }
+  .cover-btn.c-responder .ico { background: var(--coral-soft); color: var(--coral); }
+
+  .backup-row { display: flex; gap: 10px; margin-top: 22px; }
+  .backup-row button {
+    flex: 1;
+    border: none;
+    background: transparent;
+    border: 1.5px dashed var(--line);
+    color: var(--muted);
+    border-radius: 14px;
+    padding: 13px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .backup-row button:active { background: var(--plum-soft); }
+
+  .lock-responder {
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.85);
+    border-radius: 999px;
+    padding: 11px 22px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    font-family: "Nunito Sans", sans-serif;
+    cursor: pointer;
+  }
+  .lock-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: var(--paper);
+    z-index: 120;
+    overflow-y: auto;
+    padding: 18px 16px 40px;
+  }
+  .lock-overlay.open { display: block; }
+  .lock-overlay .lo-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; max-width: 680px; margin-left: auto; margin-right: auto; }
+  .lock-overlay .lo-head h2 { font-family: "Fraunces", Georgia, serif; font-size: 1.3rem; color: var(--ink); }
+  .lock-overlay .lo-close {
+    border: none; background: var(--card); color: var(--muted);
+    border-radius: 999px; padding: 9px 18px;
+    font-weight: 800; font-family: inherit; font-size: 0.85rem; cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .lock-overlay .lo-body { max-width: 680px; margin: 0 auto; }
+
   /* ---------- PIN lock ---------- */
   .lock {
     position: fixed; inset: 0;
@@ -553,6 +610,15 @@
     <button onclick="pinDigit('0')">0</button>
     <button class="ghost" onclick="pinBack()">&#9003;</button>
   </div>
+  <button class="lock-responder" onclick="openLockResponder()">&#10010; First responder info</button>
+</div>
+
+<div class="lock-overlay" id="lockResponder">
+  <div class="lo-head">
+    <h2>First Responder Info</h2>
+    <button class="lo-close" onclick="document.getElementById('lockResponder').classList.remove('open')">Close</button>
+  </div>
+  <div class="lo-body" id="lockResponderBody"></div>
 </div>
 
 <div class="top">
@@ -591,6 +657,15 @@
         <div class="t">Pets</div>
         <div class="s">Vets, vaccines &amp; records</div>
       </button>
+      <button class="cover-btn c-responder" onclick="showPage('responder')">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 3 7v2h18V7l-9-5zm-7 9v8H3v2h18v-2h-2v-8h-3v8h-3v-8h-2v8H8v-8H5z"/></svg></div>
+        <div class="t">First Responder</div>
+        <div class="s">Address &amp; emergency contacts</div>
+      </button>
+    </div>
+    <div class="backup-row">
+      <button onclick="exportBackup()">&#8681; Export backup</button>
+      <button onclick="document.getElementById('backupInput').click()">&#8682; Restore backup</button>
     </div>
   </div>
 
@@ -677,9 +752,21 @@
     <div class="storage-note">Vaccine records and photos are saved on this device. Use the Share button on any record to send it by text or email.</div>
   </div>
 
+  <!-- FIRST RESPONDER -->
+  <div class="page" id="page-responder">
+    <div class="owner-band">
+      <span class="owner-chip em" style="background:var(--coral-soft);color:var(--coral);">If Emergency Crews Arrive</span>
+      <span class="rule"></span>
+    </div>
+    <div id="responder-card"></div>
+    <div class="storage-note">This card is also viewable from the code screen without entering the code - keep anything you wouldn't hand a stranger (like door codes) out of it, or ask to turn that off.</div>
+  </div>
+
 </div>
 
 <input type="file" id="fileInput" accept="image/*,application/pdf" onchange="handleFile(event)">
+<input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFile(event)">
+<input type="file" id="backupInput" accept=".json,application/json" onchange="importBackup(event)">
 
 <!-- Contact form -->
 <div class="modal-bg" id="formModal">
@@ -730,7 +817,7 @@
   <div class="modal">
     <h3 id="profileTitle">Edit profile</h3>
     <label>Date of birth (optional)</label>
-    <input id="p-dob" placeholder="e.g. 03/14/1992">
+    <input id="p-dob" inputmode="numeric" placeholder="MM/DD/YYYY">
     <label>Blood type (optional)</label>
     <input id="p-blood" placeholder="e.g. O+">
     <label>Allergies</label>
@@ -755,7 +842,7 @@
     <label>Species / breed</label>
     <input id="pet-breed" placeholder="e.g. Beagle">
     <label>Date of birth (optional)</label>
-    <input id="pet-dob" placeholder="e.g. 06/2019 or approximate">
+    <input id="pet-dob" inputmode="numeric" placeholder="MM/DD/YYYY (use 01/01 if only the year is known)">
     <label>Microchip # (optional)</label>
     <input id="pet-chip" inputmode="numeric" placeholder="e.g. 985112004567890">
     <label>Allergies</label>
@@ -799,6 +886,41 @@
     <div class="btns">
       <button class="cancel" onclick="closeModal('docModal')">Cancel</button>
       <button class="save" onclick="saveDocMeta()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Responder form -->
+<div class="modal-bg" id="responderModal">
+  <div class="modal">
+    <h3>First responder card</h3>
+    <label>Home address</label>
+    <textarea id="r-address" placeholder="Street address, city - what you'd tell a 911 dispatcher"></textarea>
+    <label>Household</label>
+    <textarea id="r-house" placeholder="e.g. 2 adults. Beagle named Bia - friendly but loud, do not let her out"></textarea>
+    <div class="m-section">Emergency contacts</div>
+    <label>Contact 1 - name</label>
+    <input id="r-ice1n" placeholder="e.g. Em's daughter">
+    <label>Contact 1 - phone</label>
+    <input id="r-ice1p" type="tel" inputmode="tel" placeholder="e.g. 865-555-0123">
+    <label>Contact 2 - name (optional)</label>
+    <input id="r-ice2n" placeholder="">
+    <label>Contact 2 - phone (optional)</label>
+    <input id="r-ice2p" type="tel" inputmode="tel" placeholder="">
+    <div class="btns">
+      <button class="cancel" onclick="closeModal('responderModal')">Cancel</button>
+      <button class="save" onclick="saveResponder()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Upload chooser -->
+<div class="modal-bg" id="uploadChoice">
+  <div class="modal">
+    <h3>Add document</h3>
+    <div class="btns" style="flex-direction:column;margin-top:14px;">
+      <button class="save" onclick="closeModal('uploadChoice');document.getElementById('cameraInput').click()">&#128247; Take a photo</button>
+      <button class="cancel" onclick="closeModal('uploadChoice');document.getElementById('fileInput').click()">Choose from library / files</button>
     </div>
   </div>
 </div>
@@ -856,7 +978,7 @@ const store = {
 };
 
 const PEOPLE = ['Em', 'Hameed'];
-const CORE_KEYS = ['contacts', 'doctors', 'profiles', 'meds', 'pets', 'notes'];
+const CORE_KEYS = ['contacts', 'doctors', 'profiles', 'meds', 'pets', 'notes', 'responder'];
 
 let data = {
   contacts: store.get('eh5_contacts', []),   // {owner:'Em'|'Hameed'|'Vets', name, rel, phone, phoneLabel, notes}
@@ -867,6 +989,7 @@ let data = {
   notes: store.get('eh5_notes', { Em: '', Hameed: '' }),
   docs: store.get('eh5_docs', []),           // {id, kind:'doc', owner, name, tag, type, data, createdAt}
   petdocs: store.get('eh5_petdocs', []),     // {id, kind:'petdoc', petId, name, tag, type, data, createdAt}
+  responder: store.get('eh5_responder', {}), // {address, house, ice1n, ice1p, ice2n, ice2p}
 };
 
 // Ensure every stored file has an id (older saves)
@@ -881,7 +1004,7 @@ if (!store.get('eh5_init', false)) {
   store.set('eh5_init', true);
 }
 
-const LOCAL_KEYS = { contacts:'eh5_contacts', doctors:'eh5_doctors', profiles:'eh5_profiles', meds:'eh5_meds', pets:'eh5_pets', notes:'eh5_notes', docs:'eh5_docs', petdocs:'eh5_petdocs' };
+const LOCAL_KEYS = { contacts:'eh5_contacts', doctors:'eh5_doctors', profiles:'eh5_profiles', meds:'eh5_meds', pets:'eh5_pets', notes:'eh5_notes', docs:'eh5_docs', petdocs:'eh5_petdocs', responder:'eh5_responder' };
 function cacheLocal(key) { store.set(LOCAL_KEYS[key], data[key]); }
 
 // ---------- Firebase ----------
@@ -892,9 +1015,11 @@ function setSync(state, err) {
   const pill = document.getElementById('syncPill');
   if (!pill) return;
   if (err) lastSyncError = err;
-  pill.classList.remove('synced', 'error');
+  pill.classList.remove('synced', 'error', 'offline');
+  if (state === 'error' && !navigator.onLine) state = 'offline';
   if (state === 'synced') { pill.textContent = 'Synced'; pill.classList.add('synced'); }
   else if (state === 'error') { pill.textContent = 'Sync error'; pill.classList.add('error'); }
+  else if (state === 'offline') { pill.textContent = 'Offline'; pill.classList.add('offline'); }
   else { pill.textContent = 'Local'; }
 }
 function explainSync() {
@@ -918,7 +1043,9 @@ async function initFirebase() {
     const appM = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
     const fsM = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
     const app = appM.initializeApp(firebaseConfig);
-    const db = fsM.getFirestore(app);
+    let db;
+    try { db = fsM.initializeFirestore(app, { localCache: fsM.persistentLocalCache() }); }
+    catch (e) { db = fsM.getFirestore(app); }
     // Anonymous sign-in (enable it in Firebase console -> Authentication).
     // If it's not enabled, we continue anyway - test-mode rules will still allow access.
     try {
@@ -1034,7 +1161,8 @@ const PAGE_TITLES = {
   contacts: 'Contacts',
   medical: 'Medical',
   docs: 'Documents',
-  pets: 'Pets'
+  pets: 'Pets',
+  responder: 'First Responder'
 };
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1403,7 +1531,7 @@ function renderDocs() {
 function pickFile(collection, target) {
   docCollection = collection;
   uploadTarget = target;
-  document.getElementById('fileInput').click();
+  openModal('uploadChoice');
 }
 function readAsDataURL(file) {
   return new Promise((resolve, reject) => {
@@ -1619,6 +1747,130 @@ function renderAll() {
   renderDocs();
   renderPets();
   renderNotes();
+  renderResponder();
+}
+
+// ---------- first responder card ----------
+function responderCardHtml(r, opts) {
+  opts = opts || {};
+  const has = r && (r.address || r.house || r.ice1p);
+  if (!has) return '';
+  let ice = '';
+  if (r.ice1p) ice += numRow(r.ice1p, r.ice1n || 'Emergency contact');
+  if (r.ice2p) ice += numRow(r.ice2p, r.ice2n || 'Emergency contact');
+  return '<div class="card person-card" style="--pc:var(--coral);">' +
+    '<div class="p-head"><div class="p-name">In case of emergency</div>' +
+    (opts.editable ? '<div class="row-edit"><button class="icon-btn" onclick="openResponderForm()">&#9998;</button></div>' : '') +
+    '</div>' +
+    '<div class="p-grid">' +
+    (r.address ? '<div class="p-item warn wide"><div class="k">Address</div><div class="v">' + esc(r.address) + '</div></div>' : '') +
+    (r.house ? '<div class="p-item wide"><div class="k">Household</div><div class="v">' + esc(r.house) + '</div></div>' : '') +
+    '</div>' +
+    (ice ? '<div class="c-actions" style="margin-top:12px;">' + ice + '</div>' : '') +
+    '</div>';
+}
+function renderResponder() {
+  const el = document.getElementById('responder-card');
+  if (!el) return;
+  const card = responderCardHtml(data.responder, { editable: true });
+  el.innerHTML = card || '<button class="setup-profile" onclick="openResponderForm()">+ Set up the first responder card</button>';
+  if (card) el.innerHTML += '<button class="add-inline" onclick="openResponderForm()" style="display:block;">Edit card</button>';
+}
+function openResponderForm() {
+  const r = data.responder || {};
+  document.getElementById('r-address').value = r.address || '';
+  document.getElementById('r-house').value = r.house || '';
+  document.getElementById('r-ice1n').value = r.ice1n || '';
+  document.getElementById('r-ice1p').value = r.ice1p || '';
+  document.getElementById('r-ice2n').value = r.ice2n || '';
+  document.getElementById('r-ice2p').value = r.ice2p || '';
+  openModal('responderModal');
+}
+function saveResponder() {
+  data.responder = {
+    address: document.getElementById('r-address').value.trim(),
+    house: document.getElementById('r-house').value.trim(),
+    ice1n: document.getElementById('r-ice1n').value.trim(),
+    ice1p: document.getElementById('r-ice1p').value.trim(),
+    ice2n: document.getElementById('r-ice2n').value.trim(),
+    ice2p: document.getElementById('r-ice2p').value.trim()
+  };
+  persist('responder');
+  renderResponder();
+  closeModal('responderModal');
+}
+function openLockResponder() {
+  const body = document.getElementById('lockResponderBody');
+  const card = responderCardHtml(data.responder, { editable: false });
+  body.innerHTML = card || '<div class="empty">Nothing here yet - the first responder card gets set up inside the app (First Responder page).</div>';
+  document.getElementById('lockResponder').classList.add('open');
+}
+
+// ---------- backup & restore ----------
+function exportBackup() {
+  const payload = { app: 'emergency-hub', version: 1, exported: new Date().toISOString(), data: {} };
+  CORE_KEYS.forEach(k => payload.data[k] = data[k]);
+  payload.data.docs = data.docs;
+  payload.data.petdocs = data.petdocs;
+  const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'emergency-hub-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast('Backup saved to your files');
+}
+function importBackup(ev) {
+  const file = ev.target.files[0];
+  ev.target.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let payload;
+    try { payload = JSON.parse(reader.result); } catch (e) { alert('That file is not a valid backup.'); return; }
+    if (!payload || payload.app !== 'emergency-hub' || !payload.data) { alert('That file is not an Emergency Hub backup.'); return; }
+    if (!confirm('Restore from backup dated ' + (payload.exported || 'unknown') + '? This replaces current entries.')) return;
+    CORE_KEYS.forEach(k => { if (payload.data[k] !== undefined) { data[k] = payload.data[k]; persist(k); } });
+    if (Array.isArray(payload.data.docs)) { data.docs = payload.data.docs; cacheLocal('docs'); }
+    if (Array.isArray(payload.data.petdocs)) { data.petdocs = payload.data.petdocs; cacheLocal('petdocs'); }
+    if (fb) [...data.docs, ...data.petdocs].forEach(f => fb.setDoc(fb.fileRef(f.id), f).catch(err => { console.error(err); setSync('error', err); }));
+    renderAll();
+    toast('Backup restored');
+  };
+  reader.readAsText(file);
+}
+
+// ---------- input formatters (numeric keypads + auto-format) ----------
+function fmtPhone(v) {
+  const d = v.replace(/\D/g, '').slice(0, 10);
+  if (d.length < 4) return d;
+  if (d.length < 7) return d.slice(0, 3) + '-' + d.slice(3);
+  return d.slice(0, 3) + '-' + d.slice(3, 6) + '-' + d.slice(6);
+}
+function fmtDate(v) {
+  const d = v.replace(/\D/g, '').slice(0, 8);
+  if (d.length < 3) return d;
+  if (d.length < 5) return d.slice(0, 2) + '/' + d.slice(2);
+  return d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4);
+}
+function attachFmt(id, fmt) {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => { el.value = fmt(el.value); });
+}
+['f-phone', 'dr-phone', 'r-ice1p', 'r-ice2p'].forEach(id => attachFmt(id, fmtPhone));
+['p-dob', 'pet-dob'].forEach(id => attachFmt(id, fmtDate));
+
+// ---------- connectivity + service worker ----------
+window.addEventListener('offline', () => setSync('offline'));
+window.addEventListener('online', () => {
+  if (fb) setSync('synced');
+  else if (HOUSEHOLD_ID) { setSync('local'); initFirebase(); }
+});
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('./sw.js').catch(e => console.warn('SW registration failed:', e));
 }
 
 // ---------- PIN lock ----------
