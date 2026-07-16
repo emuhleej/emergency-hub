@@ -396,6 +396,66 @@
   .viewer-body img { max-width: 100%; max-height: 100%; border-radius: 8px; }
   .viewer-body iframe { border: 0; width: 100%; height: 100%; background: #fff; border-radius: 8px; }
 
+  /* ---------- Photo editor ---------- */
+  .editor {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(20,14,18,0.97);
+    z-index: 60;
+    flex-direction: column;
+  }
+  .editor.open { display: flex; }
+  .editor-stage {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    padding: 18px;
+    min-height: 0;
+  }
+  .editor-wrap { position: relative; }
+  #editCanvas { display: block; border-radius: 6px; }
+  .crop-box {
+    position: absolute;
+    border: 2px solid #fff;
+    border-radius: 4px;
+    box-shadow: 0 0 0 9999px rgba(10,6,9,0.6);
+    cursor: move;
+    touch-action: none;
+  }
+  .crop-handle { position: absolute; width: 30px; height: 30px; touch-action: none; }
+  .crop-handle::after {
+    content: '';
+    position: absolute; inset: 7px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  }
+  .crop-handle.nw { left: -15px; top: -15px; cursor: nwse-resize; }
+  .crop-handle.ne { right: -15px; top: -15px; cursor: nesw-resize; }
+  .crop-handle.sw { left: -15px; bottom: -15px; cursor: nesw-resize; }
+  .crop-handle.se { right: -15px; bottom: -15px; cursor: nwse-resize; }
+  .editor-hint {
+    text-align: center;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.75rem; font-weight: 700;
+    padding: 6px 16px 10px;
+  }
+  .editor-tools {
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    padding: 0 16px 26px;
+  }
+  .editor-tools button {
+    border: none;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    border-radius: 999px;
+    padding: 11px 16px;
+    font-size: 0.85rem; font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .editor-tools button.on { background: var(--teal); }
+
   .upload-tile {
     border: 1.5px dashed var(--teal-mid);
     border-radius: 18px;
@@ -555,6 +615,57 @@
   }
   .update-banner.show { display: block; }
 
+  /* ---------- Google sign-in overlay ---------- */
+  .signin-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: linear-gradient(160deg, var(--plum) 0%, var(--plum-deep) 100%);
+    z-index: 110;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+  }
+  .signin-overlay.open { display: flex; }
+  .signin-card {
+    width: min(380px, 100%);
+    background: rgba(255,255,255,0.09);
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 28px;
+    padding: 28px 22px;
+    box-shadow: 0 18px 45px rgba(20,14,18,0.24);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .signin-overlay h2 { font-family: "Fraunces", Georgia, serif; color: #fff; font-size: 1.4rem; font-weight: 700; }
+  .signin-overlay h2 em { font-style: normal; color: var(--teal-mid); }
+  .signin-overlay p { color: rgba(255,255,255,0.65); font-size: 0.88rem; font-weight: 600; max-width: 300px; }
+  .google-btn {
+    display: flex; align-items: center; gap: 12px;
+    border: none;
+    background: #fff;
+    color: #3c3c3c;
+    border-radius: 999px;
+    padding: 14px 28px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+  .google-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+  .google-btn:disabled { opacity: 0.7; cursor: wait; }
+  .signin-open {
+    color: #d9f1ec;
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(217,241,236,0.55);
+  }
+  .signin-error { color: var(--amber-mid); font-size: 0.82rem; font-weight: 700; min-height: 1.2em; }
+
   #printSheet { display: none; }
   @media print {
     body * { visibility: hidden; }
@@ -625,6 +736,25 @@
 </style>
 </head>
 <body>
+
+<!-- Google sign-in overlay (shown after PIN unlock if not yet signed in) -->
+<div class="signin-overlay" id="signinOverlay">
+  <div class="signin-card">
+    <h2>Emergency <em>Hub</em></h2>
+    <p>Sign in with Em or Hameed's approved Google account to sync this Hub.</p>
+    <button class="google-btn" id="googleSignInBtn" onclick="googleSignIn()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      <span class="google-btn-text">Sign in with Google</span>
+    </button>
+    <a class="signin-open" href="https://emuhleej.github.io/emergency-hub/" target="_blank" rel="noopener">Open in browser</a>
+    <div class="signin-error" id="signinError"></div>
+  </div>
+</div>
 
 <div class="lock" id="lockScreen">
   <h2>Emergency <em>Hub</em></h2>
@@ -711,14 +841,12 @@
   <!-- CONTACTS -->
   <div class="page" id="page-contacts">
     <input class="search" id="searchBox" placeholder="Search contacts…" oninput="renderContacts()">
-
     <div class="owner-band">
       <span class="owner-chip em">Em</span>
       <span class="rule"></span>
       <button class="add-btn" onclick="openContactForm('Em')">+ Add</button>
     </div>
     <div id="contacts-Em"></div>
-
     <div class="owner-band">
       <span class="owner-chip hameed">Hameed</span>
       <span class="rule"></span>
@@ -739,7 +867,6 @@
       <button class="add-btn" onclick="openDoctorForm('Em')">+ Add doctor</button>
     </div>
     <div id="doctors-Em"></div>
-
     <div class="owner-band">
       <span class="owner-chip hameed">Hameed</span>
       <span class="rule"></span>
@@ -761,7 +888,6 @@
     <div class="docs-grid" id="docs-Em"></div>
     <div class="notes-k">Em — policy numbers &amp; notes</div>
     <textarea class="notes-box" id="notes-Em" placeholder="Policy numbers, member IDs, group numbers…" onchange="saveNotes('Em')"></textarea>
-
     <div class="owner-band">
       <span class="owner-chip hameed">Hameed</span>
       <span class="rule"></span>
@@ -769,7 +895,6 @@
     <div class="docs-grid" id="docs-Hameed"></div>
     <div class="notes-k">Hameed — policy numbers &amp; notes</div>
     <textarea class="notes-box" id="notes-Hameed" placeholder="Policy numbers, member IDs, group numbers…" onchange="saveNotes('Hameed')"></textarea>
-
     <div class="storage-note">Saved on this device in this browser. Screenshots of cards upload fastest. Add them once on each phone.</div>
   </div>
 
@@ -781,7 +906,6 @@
       <button class="add-btn" onclick="openContactForm('Vets')">+ Add</button>
     </div>
     <div id="contacts-Vets"></div>
-
     <div class="owner-band">
       <span class="owner-chip pets">Pets</span>
       <span class="rule"></span>
@@ -811,16 +935,11 @@
 <div class="modal-bg" id="formModal">
   <div class="modal">
     <h3 id="formTitle">Add contact</h3>
-    <label>Name</label>
-    <input id="f-name" placeholder="e.g. Mom, Boss, Clinic name">
-    <label>Relationship / role</label>
-    <input id="f-rel" placeholder="e.g. Mother, Charge nurse, Emergency vet">
-    <label>Phone</label>
-    <input id="f-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="e.g. 865-555-0123">
-    <label>Phone label (optional)</label>
-    <input id="f-phone-label" placeholder="e.g. Cell, Main line, After hours">
-    <label>Notes (optional)</label>
-    <textarea id="f-notes" placeholder="Address, hours, account #…"></textarea>
+    <label>Name</label><input id="f-name" placeholder="e.g. Mom, Boss, Clinic name">
+    <label>Relationship / role</label><input id="f-rel" placeholder="e.g. Mother, Charge nurse, Emergency vet">
+    <label>Phone</label><input id="f-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="e.g. 865-555-0123">
+    <label>Phone label (optional)</label><input id="f-phone-label" placeholder="e.g. Cell, Main line, After hours">
+    <label>Notes (optional)</label><textarea id="f-notes" placeholder="Address, hours, account #…"></textarea>
     <div class="btns">
       <button class="cancel" onclick="closeModal('formModal')">Cancel</button>
       <button class="save" onclick="saveContact()">Save</button>
@@ -833,17 +952,12 @@
   <div class="modal">
     <h3 id="doctorTitle">Add doctor</h3>
     <div class="m-section">Doctor details</div>
-    <label>Name</label>
-    <input id="dr-name" placeholder="e.g. Dr. Patel">
-    <label>Specialty / role</label>
-    <input id="dr-spec" placeholder="e.g. Primary care, Cardiologist, Dentist">
+    <label>Name</label><input id="dr-name" placeholder="e.g. Dr. Patel">
+    <label>Specialty / role</label><input id="dr-spec" placeholder="e.g. Primary care, Cardiologist, Dentist">
     <div class="m-section">Contact information</div>
-    <label>Office phone</label>
-    <input id="dr-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="e.g. 865-555-0123">
-    <label>Practice / location (optional)</label>
-    <input id="dr-office" placeholder="e.g. Covenant Medical Group, Powell">
-    <label>Notes (optional)</label>
-    <textarea id="dr-notes" placeholder="Portal login hint, referral needed, preferred pharmacy…"></textarea>
+    <label>Office phone</label><input id="dr-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="e.g. 865-555-0123">
+    <label>Practice / location (optional)</label><input id="dr-office" placeholder="e.g. Covenant Medical Group, Powell">
+    <label>Notes (optional)</label><textarea id="dr-notes" placeholder="Portal login hint, referral needed, preferred pharmacy…"></textarea>
     <div class="btns">
       <button class="cancel" onclick="closeModal('doctorModal')">Cancel</button>
       <button class="save" onclick="saveDoctor()">Save</button>
@@ -851,20 +965,15 @@
   </div>
 </div>
 
-<!-- Profile form (Em / Hameed) -->
+<!-- Profile form -->
 <div class="modal-bg" id="profileModal">
   <div class="modal">
     <h3 id="profileTitle">Edit profile</h3>
-    <label>Date of birth (optional)</label>
-    <input id="p-dob" inputmode="numeric" placeholder="MM/DD/YYYY">
-    <label>Blood type (optional)</label>
-    <input id="p-blood" placeholder="e.g. O+">
-    <label>Allergies</label>
-    <textarea id="p-allergies" placeholder="e.g. Penicillin — hives. Write None if none."></textarea>
-    <label>Conditions (optional)</label>
-    <textarea id="p-conditions" placeholder="e.g. Hypertension, asthma"></textarea>
-    <label>Other notes (optional)</label>
-    <textarea id="p-notes" placeholder="e.g. Preferred hospital"></textarea>
+    <label>Date of birth (optional)</label><input id="p-dob" inputmode="numeric" placeholder="MM/DD/YYYY">
+    <label>Blood type (optional)</label><input id="p-blood" placeholder="e.g. O+">
+    <label>Allergies</label><textarea id="p-allergies" placeholder="e.g. Penicillin — hives. Write None if none."></textarea>
+    <label>Conditions (optional)</label><textarea id="p-conditions" placeholder="e.g. Hypertension, asthma"></textarea>
+    <label>Other notes (optional)</label><textarea id="p-notes" placeholder="e.g. Preferred hospital"></textarea>
     <div class="btns">
       <button class="cancel" onclick="closeModal('profileModal')">Cancel</button>
       <button class="save" onclick="saveProfile()">Save</button>
@@ -876,20 +985,13 @@
 <div class="modal-bg" id="petModal">
   <div class="modal">
     <h3 id="petTitle">Add pet</h3>
-    <label>Name</label>
-    <input id="pet-name" placeholder="e.g. Bia">
-    <label>Species / breed</label>
-    <input id="pet-breed" placeholder="e.g. Beagle">
-    <label>Date of birth (optional)</label>
-    <input id="pet-dob" inputmode="numeric" placeholder="MM/DD/YYYY (use 01/01 if only the year is known)">
-    <label>Microchip # (optional)</label>
-    <input id="pet-chip" inputmode="numeric" placeholder="e.g. 985112004567890">
-    <label>Allergies</label>
-    <textarea id="pet-allergies" placeholder="e.g. Chicken. Write None if none."></textarea>
-    <label>Conditions (optional)</label>
-    <textarea id="pet-conditions" placeholder="e.g. Seasonal skin allergies"></textarea>
-    <label>Other notes (optional)</label>
-    <textarea id="pet-notes" placeholder="e.g. Food brand, boarding info, escapes fences"></textarea>
+    <label>Name</label><input id="pet-name" placeholder="e.g. Bia">
+    <label>Species / breed</label><input id="pet-breed" placeholder="e.g. Beagle">
+    <label>Date of birth (optional)</label><input id="pet-dob" inputmode="numeric" placeholder="MM/DD/YYYY">
+    <label>Microchip # (optional)</label><input id="pet-chip" inputmode="numeric" placeholder="e.g. 985112004567890">
+    <label>Allergies</label><textarea id="pet-allergies" placeholder="e.g. Chicken. Write None if none."></textarea>
+    <label>Conditions (optional)</label><textarea id="pet-conditions" placeholder="e.g. Seasonal skin allergies"></textarea>
+    <label>Other notes (optional)</label><textarea id="pet-notes" placeholder="e.g. Food brand, boarding info, escapes fences"></textarea>
     <div class="btns">
       <button class="cancel" onclick="closeModal('petModal')">Cancel</button>
       <button class="save" onclick="savePet()">Save</button>
@@ -901,12 +1003,9 @@
 <div class="modal-bg" id="medModal">
   <div class="modal">
     <h3 id="medTitle">Add medication</h3>
-    <label>Medication</label>
-    <input id="m-name" placeholder="e.g. Lisinopril">
-    <label>Dose / schedule</label>
-    <input id="m-dose" placeholder="e.g. 10 mg daily, AM">
-    <label>Notes (optional)</label>
-    <input id="m-notes" placeholder="e.g. take with food, refill at CVS">
+    <label>Medication</label><input id="m-name" placeholder="e.g. Lisinopril">
+    <label>Dose / schedule</label><input id="m-dose" placeholder="e.g. 10 mg daily, AM">
+    <label>Notes (optional)</label><input id="m-notes" placeholder="e.g. take with food, refill at CVS">
     <div class="btns">
       <button class="cancel" onclick="closeModal('medModal')">Cancel</button>
       <button class="save" onclick="saveMed()">Save</button>
@@ -918,10 +1017,8 @@
 <div class="modal-bg" id="docModal">
   <div class="modal">
     <h3>Rename document</h3>
-    <label>Name</label>
-    <input id="d-name" placeholder="e.g. BCBS card — front">
-    <label>Tag (optional)</label>
-    <input id="d-tag" placeholder="e.g. Health, Dental, Rabies 2026">
+    <label>Name</label><input id="d-name" placeholder="e.g. BCBS card — front">
+    <label>Tag (optional)</label><input id="d-tag" placeholder="e.g. Health, Dental, Rabies 2026">
     <div class="btns">
       <button class="cancel" onclick="closeModal('docModal')">Cancel</button>
       <button class="save" onclick="saveDocMeta()">Save</button>
@@ -933,19 +1030,13 @@
 <div class="modal-bg" id="responderModal">
   <div class="modal">
     <h3>First responder card</h3>
-    <label>Home address</label>
-    <textarea id="r-address" placeholder="Street address, city - what you'd tell a 911 dispatcher"></textarea>
-    <label>Household</label>
-    <textarea id="r-house" placeholder="e.g. 2 adults. Beagle named Bia - friendly but loud, do not let her out"></textarea>
+    <label>Home address</label><textarea id="r-address" placeholder="Street address, city - what you'd tell a 911 dispatcher"></textarea>
+    <label>Household</label><textarea id="r-house" placeholder="e.g. 2 adults. Beagle named Bia - friendly but loud, do not let her out"></textarea>
     <div class="m-section">Emergency contacts</div>
-    <label>Contact 1 - name</label>
-    <input id="r-ice1n" placeholder="e.g. Em's daughter">
-    <label>Contact 1 - phone</label>
-    <input id="r-ice1p" type="tel" inputmode="tel" placeholder="e.g. 865-555-0123">
-    <label>Contact 2 - name (optional)</label>
-    <input id="r-ice2n" placeholder="">
-    <label>Contact 2 - phone (optional)</label>
-    <input id="r-ice2p" type="tel" inputmode="tel" placeholder="">
+    <label>Contact 1 - name</label><input id="r-ice1n" placeholder="e.g. Em's daughter">
+    <label>Contact 1 - phone</label><input id="r-ice1p" type="tel" inputmode="tel" placeholder="e.g. 865-555-0123">
+    <label>Contact 2 - name (optional)</label><input id="r-ice2n">
+    <label>Contact 2 - phone (optional)</label><input id="r-ice2p" type="tel" inputmode="tel">
     <div class="btns">
       <button class="cancel" onclick="closeModal('responderModal')">Cancel</button>
       <button class="save" onclick="saveResponder()">Save</button>
@@ -958,9 +1049,11 @@
   <div class="modal">
     <h3>Add document</h3>
     <div class="btns" style="flex-direction:column;margin-top:14px;">
-      <button class="save" onclick="closeModal('uploadChoice');document.getElementById('cameraInput').click()">&#128247; Take a photo</button>
-      <button class="cancel" onclick="closeModal('uploadChoice');document.getElementById('fileInput').click()">Choose from library / files</button>
+      <button class="save" onclick="closeModal('uploadChoice');scanMode=false;document.getElementById('cameraInput').click()">&#128247; Take a photo</button>
+      <button class="save" onclick="closeModal('uploadChoice');scanMode=true;document.getElementById('cameraInput').click()">&#128196; Scan a document</button>
+      <button class="cancel" onclick="closeModal('uploadChoice');scanMode=false;document.getElementById('fileInput').click()">Choose from library / files</button>
     </div>
+    <div class="storage-note" style="margin-top:12px;">Scan opens the camera and turns the page into a crisp black-and-white copy.</div>
   </div>
 </div>
 
@@ -968,6 +1061,7 @@
   <div class="viewer-bar">
     <button onclick="closeViewer()">&#10005; Close</button>
     <div class="vb-group">
+      <button id="viewerEditBtn" onclick="editCurrentDoc()">Edit</button>
       <button onclick="downloadCurrentDoc()">Save</button>
       <button class="primary" onclick="shareCurrentDoc()">Share</button>
     </div>
@@ -975,21 +1069,38 @@
   <div class="viewer-body" id="viewerBody"></div>
 </div>
 
+<div class="editor" id="editor">
+  <div class="viewer-bar">
+    <button onclick="cancelEditor()">&#10005; Cancel</button>
+    <div class="vb-group">
+      <button class="primary" onclick="saveEditor()">Done</button>
+    </div>
+  </div>
+  <div class="editor-stage" id="editorStage">
+    <div class="editor-wrap">
+      <canvas id="editCanvas"></canvas>
+      <div class="crop-box" id="cropBox" onpointerdown="cropDown(event,'move')">
+        <div class="crop-handle nw" onpointerdown="cropDown(event,'nw')"></div>
+        <div class="crop-handle ne" onpointerdown="cropDown(event,'ne')"></div>
+        <div class="crop-handle sw" onpointerdown="cropDown(event,'sw')"></div>
+        <div class="crop-handle se" onpointerdown="cropDown(event,'se')"></div>
+      </div>
+    </div>
+  </div>
+  <div class="editor-hint">Drag the corners to crop, or drag the box to move it</div>
+  <div class="editor-tools">
+    <button onclick="rotateEditor(-1)">&#8634; Turn left</button>
+    <button onclick="rotateEditor(1)">&#8635; Turn right</button>
+    <button id="scanToggle" onclick="toggleScan()">&#128196; Scan B&amp;W</button>
+    <button onclick="resetEditor()">Reset</button>
+  </div>
+</div>
+
 <div class="update-banner" id="updateBanner" onclick="location.reload()">A new version is ready &mdash; tap to update</div>
 <div id="printSheet"></div>
-
 <div class="toast" id="toast"></div>
 
 <script>
-/* =========================================================
-   FIREBASE SYNC SETUP
-   1. Paste your config from the Firebase console:
-      Project settings -> General -> Your apps -> SDK setup and config
-   2. Set HOUSEHOLD_ID to a random phrase only you and Hameed know
-      (it acts like a shared key for your data - make it unguessable).
-   Leave the placeholders as-is to run in local-only mode
-   (everything saves to this device's browser instead).
-   ========================================================= */
 const firebaseConfig = {
   apiKey: "AIzaSyCjTtCmdY57CaFolPP7OwzlzCkqtDZu6Zo",
   authDomain: "emergency-hub-b19b2.firebaseapp.com",
@@ -998,12 +1109,15 @@ const firebaseConfig = {
   messagingSenderId: "274616015312",
   appId: "1:274616015312:web:c643ed312dea18cc0201d5"
 };
+
+// Only these two Google accounts can access data
+const ALLOWED_EMAILS = ['emilyjmount@gmail.com', 'hameed.habib89@gmail.com'];
+
 const HID_BASE = "plum-beagle-7734-tn";
 const PIN_SALT = "ehub-plum-2026";
 const PIN_HASH = "51d13a5baf7779932fc41cdddfab18108529de57ef1209776a6309271cd950fa";
-let HOUSEHOLD_ID = null; // derived from the PIN on unlock
+let HOUSEHOLD_ID = null;
 
-// ---------- local cache (used alone in local mode, as offline cache in sync mode) ----------
 const mem = {};
 const store = {
   get(k, fallback) {
@@ -1023,21 +1137,19 @@ const PEOPLE = ['Em', 'Hameed'];
 const CORE_KEYS = ['contacts', 'doctors', 'profiles', 'meds', 'pets', 'notes', 'responder'];
 
 let data = {
-  contacts: store.get('eh5_contacts', []),   // {owner:'Em'|'Hameed'|'Vets', name, rel, phone, phoneLabel, notes}
-  doctors: store.get('eh5_doctors', []),     // {owner, name, spec, phone, office, notes}
-  profiles: store.get('eh5_profiles', {}),   // {Em:{}, Hameed:{}}
-  meds: store.get('eh5_meds', []),           // {owner: 'Em'|'Hameed'|petId, name, dose, notes}
-  pets: store.get('eh5_pets', []),           // {id, name, breed, dob, chip, allergies, conditions, notes}
+  contacts: store.get('eh5_contacts', []),
+  doctors: store.get('eh5_doctors', []),
+  profiles: store.get('eh5_profiles', {}),
+  meds: store.get('eh5_meds', []),
+  pets: store.get('eh5_pets', []),
   notes: store.get('eh5_notes', { Em: '', Hameed: '' }),
-  docs: store.get('eh5_docs', []),           // {id, kind:'doc', owner, name, tag, type, data, createdAt}
-  petdocs: store.get('eh5_petdocs', []),     // {id, kind:'petdoc', petId, name, tag, type, data, createdAt}
-  responder: store.get('eh5_responder', {}), // {address, house, ice1n, ice1p, ice2n, ice2p}
+  docs: store.get('eh5_docs', []),
+  petdocs: store.get('eh5_petdocs', []),
+  responder: store.get('eh5_responder', {}),
 };
 
-// Ensure every stored file has an id (older saves)
 [...data.docs, ...data.petdocs].forEach(f => { if (!f.id) f.id = 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7); });
 
-// Seed Bia on first run
 if (!store.get('eh5_init', false)) {
   if (!data.pets.length) {
     data.pets.push({ id: 'pet_' + Date.now(), name: 'Bia', breed: 'Beagle', dob: '', chip: '', allergies: '', conditions: '', notes: '' });
@@ -1049,10 +1161,9 @@ if (!store.get('eh5_init', false)) {
 const LOCAL_KEYS = { contacts:'eh5_contacts', doctors:'eh5_doctors', profiles:'eh5_profiles', meds:'eh5_meds', pets:'eh5_pets', notes:'eh5_notes', docs:'eh5_docs', petdocs:'eh5_petdocs', responder:'eh5_responder' };
 function cacheLocal(key) { store.set(LOCAL_KEYS[key], data[key]); }
 
-// ---------- Firebase ----------
 let fb = null;
-
 let lastSyncError = null;
+
 function setSync(state, err) {
   const pill = document.getElementById('syncPill');
   if (!pill) return;
@@ -1064,11 +1175,12 @@ function setSync(state, err) {
   else if (state === 'offline') { pill.textContent = 'Offline'; pill.classList.add('offline'); }
   else { pill.textContent = 'Local'; }
 }
+
 function explainSync() {
   if (!lastSyncError) { alert('No sync problem recorded. Pill: ' + document.getElementById('syncPill').textContent); return; }
   const code = lastSyncError.code || '';
   let hint = '';
-  if (code.indexOf('permission-denied') !== -1) hint = '\n\nLikely fix: enable Anonymous sign-in (Authentication -> Sign-in method) and confirm the rules are published.';
+  if (code.indexOf('permission-denied') !== -1) hint = '\n\nLikely fix: confirm your Google account email matches the allowed list in the rules, and that rules are published.';
   else if (code.indexOf('not-found') !== -1 || code.indexOf('failed-precondition') !== -1) hint = '\n\nLikely fix: the Firestore database has not been created yet (Build -> Firestore Database -> Create database).';
   else if (code.indexOf('unavailable') !== -1) hint = '\n\nLikely a network issue - check the connection and reload.';
   alert('Firebase says:\n' + (lastSyncError.code || '') + '\n' + (lastSyncError.message || lastSyncError) + hint);
@@ -1079,22 +1191,134 @@ function configLooksReal() {
          firebaseConfig.apiKey && firebaseConfig.apiKey.indexOf('PASTE') !== 0;
 }
 
-async function initFirebase() {
-  if (fb) return; // already connected (e.g. re-unlock after using the lock button)
-  if (!configLooksReal()) { setSync('local'); return; }
-  try {
+// ---------- Google sign-in ----------
+let firebaseModules = null;
+async function loadFirebaseModules() {
+  if (!firebaseModules) {
     const appM = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
     const fsM = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-    const app = appM.initializeApp(firebaseConfig);
+    const auM = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+    firebaseModules = { appM, fsM, auM };
+  }
+  return firebaseModules;
+}
+function allowedEmail(email) {
+  return ALLOWED_EMAILS.map(e => e.toLowerCase()).includes(String(email || '').toLowerCase());
+}
+function setSigninMessage(message, isError) {
+  const errEl = document.getElementById('signinError');
+  if (!errEl) return;
+  errEl.textContent = message || '';
+  errEl.style.color = isError ? 'var(--amber-mid)' : 'rgba(255,255,255,0.72)';
+}
+function setSigninBusy(busy, label) {
+  const btn = document.getElementById('googleSignInBtn');
+  if (!btn) return;
+  btn.disabled = !!busy;
+  const text = btn.querySelector('.google-btn-text');
+  if (text) text.textContent = busy ? (label || 'Checking...') : 'Sign in with Google';
+}
+async function getFirebaseApp(appM) {
+  try { return appM.getApp(); } catch(e) { return appM.initializeApp(firebaseConfig); }
+}
+async function getPreparedAuth(appM, auM) {
+  const app = await getFirebaseApp(appM);
+  const auth = auM.getAuth(app);
+  try { await auM.setPersistence(auth, auM.browserLocalPersistence); } catch (e) { console.warn('Auth persistence fallback:', e && e.code); }
+  try { await auM.getRedirectResult(auth); } catch (e) { console.warn('Redirect result issue:', e && e.code); }
+  return auth;
+}
+function waitForAuthUser(auM, auth, timeoutMs) {
+  if (auth.currentUser) return Promise.resolve(auth.currentUser);
+  return new Promise(resolve => {
+    let done = false;
+    let timer = null;
+    let unsub = () => {};
+    const finish = user => {
+      if (done) return;
+      done = true;
+      if (timer) clearTimeout(timer);
+      unsub();
+      resolve(user || auth.currentUser || null);
+    };
+    unsub = auM.onAuthStateChanged(auth, finish, () => finish(null));
+    timer = setTimeout(() => finish(auth.currentUser || null), timeoutMs || 3500);
+  });
+}
+async function googleSignIn() {
+  setSigninMessage('', false);
+  setSigninBusy(true, 'Opening Google...');
+  try {
+    const { appM, auM } = await loadFirebaseModules();
+    const auth = await getPreparedAuth(appM, auM);
+    const provider = new auM.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    let user = null;
+    try {
+      const result = await auM.signInWithPopup(auth, provider);
+      user = result.user;
+    } catch (e) {
+      const code = (e && e.code) || '';
+      if (code === 'auth/popup-blocked' ||
+          code === 'auth/cancelled-popup-request' ||
+          code === 'auth/operation-not-supported-in-this-environment' ||
+          code === 'auth/web-storage-unsupported') {
+        setSigninMessage('Opening Google in this browser...', false);
+        await auM.signInWithRedirect(auth, provider);
+        return;
+      }
+      throw e;
+    }
+
+    const email = user && user.email;
+    if (!allowedEmail(email)) {
+      await auM.signOut(auth);
+      setSigninMessage((email || 'This account') + ' is not authorised for this hub.', true);
+      return;
+    }
+    document.getElementById('signinOverlay').classList.remove('open');
+    await initFirebase();
+  } catch(e) {
+    if (e && e.code === 'auth/popup-closed-by-user') {
+      setSigninMessage('Google sign-in was closed before it finished.', true);
+      return;
+    }
+    console.error('Sign-in error:', e);
+    setSigninMessage('Sign-in failed. Open in browser, then try Google again.', true);
+  } finally {
+    setSigninBusy(false);
+  }
+}
+
+async function initFirebase() {
+  if (fb) return;
+  if (!configLooksReal()) { setSync('local'); return; }
+  try {
+    const { appM, fsM, auM } = await loadFirebaseModules();
+    const app = await getFirebaseApp(appM);
+    const auth = await getPreparedAuth(appM, auM);
+    const user = await waitForAuthUser(auM, auth, 3500);
+
+    // If not signed in yet, show the Google sign-in overlay and stop here.
+    // googleSignIn() will call initFirebase() again once auth succeeds.
+    if (!user) {
+      document.getElementById('signinOverlay').classList.add('open');
+      setSigninMessage('Google sign-in is needed for synced household data.', false);
+      return;
+    }
+
+    // Double-check the signed-in account is allowed
+    if (!allowedEmail(user.email)) {
+      await auM.signOut(auth);
+      document.getElementById('signinOverlay').classList.add('open');
+      setSigninMessage((user.email || 'This account') + ' is not authorised for this hub.', true);
+      return;
+    }
+
     let db;
     try { db = fsM.initializeFirestore(app, { localCache: fsM.persistentLocalCache() }); }
     catch (e) { db = fsM.getFirestore(app); }
-    // Anonymous sign-in (enable it in Firebase console -> Authentication).
-    // If it's not enabled, we continue anyway - test-mode rules will still allow access.
-    try {
-      const auM = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
-      await auM.signInAnonymously(auM.getAuth(app));
-    } catch (e) { console.warn('Anonymous auth unavailable:', e && e.code); setSync('error', e); }
 
     fb = {
       db,
@@ -1106,9 +1330,8 @@ async function initFirebase() {
     fb.filesCol = fb.collection(db, 'hubs', HOUSEHOLD_ID, 'files');
 
     fb.onSnapshot(fb.coreRef, snap => {
-      if (!snap.exists()) {
-        bootstrapUpload();
-      } else {
+      if (!snap.exists()) { bootstrapUpload(); }
+      else {
         const d = snap.data() || {};
         CORE_KEYS.forEach(k => { if (d[k] !== undefined) { data[k] = d[k]; cacheLocal(k); } });
         renderAll();
@@ -1118,10 +1341,7 @@ async function initFirebase() {
 
     fb.onSnapshot(fb.filesCol, snap => {
       const docs = [], petdocs = [];
-      snap.forEach(s => {
-        const f = s.data();
-        (f.kind === 'petdoc' ? petdocs : docs).push(f);
-      });
+      snap.forEach(s => { const f = s.data(); (f.kind === 'petdoc' ? petdocs : docs).push(f); });
       const byTime = (a, b) => (a.createdAt || 0) - (b.createdAt || 0);
       data.docs = docs.sort(byTime);
       data.petdocs = petdocs.sort(byTime);
@@ -1129,13 +1349,13 @@ async function initFirebase() {
       renderDocs(); renderPets();
       setSync('synced');
     }, err => { console.error(err); setSync('error', err); });
+
   } catch (e) {
     console.error('Firebase init failed:', e);
     setSync('error', e);
   }
 }
 
-// First device to connect pushes its local data up
 function bootstrapUpload() {
   const payload = {};
   CORE_KEYS.forEach(k => payload[k] = data[k]);
@@ -1158,9 +1378,8 @@ let doctorIndex = -1, doctorOwner = null;
 let profileOwner = null;
 let petIndex = -1;
 let medIndex = -1, medOwner = null;
-let docIndex = -1, docCollection = 'docs', uploadTarget = null;
+let docIndex = -1, docCollection = 'docs', uploadTarget = null, scanMode = false;
 
-// ---------- helpers ----------
 function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 function jsq(s) { return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
 function telHref(num) { return 'tel:' + String(num).replace(/[^\d+]/g, ''); }
@@ -1168,10 +1387,8 @@ function smsHref(num) { return 'sms:' + String(num).replace(/[^\d+]/g, ''); }
 function initials(name) { return (name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0].toUpperCase()).join(''); }
 function toast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._h);
-  t._h = setTimeout(() => t.classList.remove('show'), 1800);
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1800);
 }
 function copyNum(num) {
   const doFallback = () => {
@@ -1198,15 +1415,7 @@ const MSG_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-
 const COPY_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
 const SHARE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.1c-.8 0-1.5.3-2 .8l-7.1-4.2c.1-.2.1-.5.1-.7s0-.5-.1-.7L16 7.2c.5.5 1.2.8 2 .8 1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3c0 .2 0 .5.1.7L8 9.8C7.5 9.3 6.8 9 6 9c-1.7 0-3 1.3-3 3s1.3 3 3 3c.8 0 1.5-.3 2-.8l7.1 4.2c-.1.2-.1.4-.1.6 0 1.6 1.3 2.9 3 2.9s3-1.3 3-2.9-1.3-2.9-3-2.9z"/></svg>';
 
-// ---------- pages ----------
-const PAGE_TITLES = {
-  home: 'Emergency <em>Hub</em>',
-  contacts: 'Contacts',
-  medical: 'Medical',
-  docs: 'Documents',
-  pets: 'Pets',
-  responder: 'First Responder'
-};
+const PAGE_TITLES = { home:'Emergency <em>Hub</em>', contacts:'Contacts', medical:'Medical', docs:'Documents', pets:'Pets', responder:'First Responder' };
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
@@ -1215,7 +1424,6 @@ function showPage(name) {
   window.scrollTo(0, 0);
 }
 
-// ---------- edit mode ----------
 function toggleEdit() {
   editing = !editing;
   document.body.classList.toggle('editing', editing);
@@ -1224,7 +1432,6 @@ function toggleEdit() {
   btn.classList.toggle('on', editing);
 }
 
-// ---------- shared rows ----------
 function numRow(num, label) {
   const t = telHref(num), s = smsHref(num);
   return '<div class="num-row">' +
@@ -1235,7 +1442,6 @@ function numRow(num, label) {
     '</div>';
 }
 
-// ---------- contacts ----------
 function matchesSearch(c, q) {
   if (!q) return true;
   return [c.name, c.rel, c.phone, c.notes].join(' ').toLowerCase().includes(q);
@@ -1247,36 +1453,24 @@ function renderContacts() {
     const el = document.getElementById('contacts-' + owner);
     if (!el) return;
     const useQ = owner === 'Vets' ? '' : q;
-    const items = data.contacts
-      .map((c, i) => ({ c, i }))
-      .filter(x => x.c.owner === owner && matchesSearch(x.c, useQ));
+    const items = data.contacts.map((c, i) => ({ c, i })).filter(x => x.c.owner === owner && matchesSearch(x.c, useQ));
     if (!items.length) {
-      const hints = {
-        Em: q ? 'No matches.' : 'No contacts yet - tap Edit, then + Add. Family, boss, unit desk line.',
-        Hameed: q ? 'No matches.' : 'No contacts yet - tap Edit, then + Add.',
-        Vets: 'Add the regular clinic and an emergency/after-hours vet.'
-      };
-      el.innerHTML = '<div class="empty">' + hints[owner] + '</div>';
-      return;
+      const hints = { Em: q ? 'No matches.' : 'No contacts yet - tap Edit, then + Add.', Hameed: q ? 'No matches.' : 'No contacts yet - tap Edit, then + Add.', Vets: 'Add the regular clinic and an emergency/after-hours vet.' };
+      el.innerHTML = '<div class="empty">' + hints[owner] + '</div>'; return;
     }
     el.innerHTML = items.map(({ c, i }) =>
-      '<div class="card">' +
-      '<div class="c-top">' +
-      '<div class="avatar">' + esc(initials(c.name)) + '</div>' +
+      '<div class="card"><div class="c-top"><div class="avatar">' + esc(initials(c.name)) + '</div>' +
       '<div class="c-info"><div class="c-name">' + esc(c.name) + '</div><div class="c-rel">' + esc(c.rel) + '</div></div>' +
-      '<div class="row-edit">' +
-      '<button class="icon-btn" onclick="openContactForm(\'' + jsq(c.owner) + '\',' + i + ')">&#9998;</button>' +
-      '<button class="icon-btn del" onclick="delContact(' + i + ')">&#10005;</button>' +
-      '</div></div>' +
+      '<div class="row-edit"><button class="icon-btn" onclick="openContactForm(\'' + jsq(c.owner) + '\',' + i + ')">&#9998;</button>' +
+      '<button class="icon-btn del" onclick="delContact(' + i + ')">&#10005;</button></div></div>' +
       '<div class="c-actions">' + numRow(c.phone, c.phoneLabel) + '</div>' +
-      (c.notes ? '<div class="c-notes">' + esc(c.notes) + '</div>' : '') +
-      '</div>'
+      (c.notes ? '<div class="c-notes">' + esc(c.notes) + '</div>' : '') + '</div>'
     ).join('');
   });
 }
 function openContactForm(owner, index = -1) {
   contactOwner = owner; contactIndex = index;
-  const c = index >= 0 ? data.contacts[index] : { name: '', rel: '', phone: '', phoneLabel: '', notes: '' };
+  const c = index >= 0 ? data.contacts[index] : { name:'', rel:'', phone:'', phoneLabel:'', notes:'' };
   const who = owner === 'Vets' ? 'Vet' : owner;
   document.getElementById('formTitle').textContent = (index >= 0 ? 'Edit' : 'Add') + ' contact - ' + who;
   document.getElementById('f-name').value = c.name;
@@ -1287,56 +1481,36 @@ function openContactForm(owner, index = -1) {
   openModal('formModal');
 }
 function saveContact() {
-  const entry = {
-    owner: contactOwner,
-    name: document.getElementById('f-name').value.trim(),
-    rel: document.getElementById('f-rel').value.trim(),
-    phone: document.getElementById('f-phone').value.trim(),
-    phoneLabel: document.getElementById('f-phone-label').value.trim(),
-    notes: document.getElementById('f-notes').value.trim()
-  };
+  const entry = { owner: contactOwner, name: document.getElementById('f-name').value.trim(), rel: document.getElementById('f-rel').value.trim(), phone: document.getElementById('f-phone').value.trim(), phoneLabel: document.getElementById('f-phone-label').value.trim(), notes: document.getElementById('f-notes').value.trim() };
   if (!entry.name || !entry.phone) { alert('Name and phone number are required.'); return; }
   if (contactIndex >= 0) { entry.owner = data.contacts[contactIndex].owner; data.contacts[contactIndex] = entry; }
   else data.contacts.push(entry);
-  persist('contacts');
-  renderContacts();
-  closeModal('formModal');
+  persist('contacts'); renderContacts(); closeModal('formModal');
 }
 function delContact(i) {
   if (!confirm('Remove ' + data.contacts[i].name + '?')) return;
-  data.contacts.splice(i, 1);
-  persist('contacts');
-  renderContacts();
+  data.contacts.splice(i, 1); persist('contacts'); renderContacts();
 }
 
-// ---------- doctors ----------
 function renderDoctors() {
   PEOPLE.forEach(owner => {
     const el = document.getElementById('doctors-' + owner);
     if (!el) return;
     const items = data.doctors.map((d, i) => ({ d, i })).filter(x => x.d.owner === owner);
-    if (!items.length) {
-      el.innerHTML = '<div class="empty">No doctors listed - tap Edit, then + Add doctor.</div>';
-      return;
-    }
+    if (!items.length) { el.innerHTML = '<div class="empty">No doctors listed - tap Edit, then + Add doctor.</div>'; return; }
     el.innerHTML = items.map(({ d, i }) =>
-      '<div class="card">' +
-      '<div class="c-top">' +
-      '<div class="avatar doc">' + esc(initials(d.name)) + '</div>' +
+      '<div class="card"><div class="c-top"><div class="avatar doc">' + esc(initials(d.name)) + '</div>' +
       '<div class="c-info"><div class="c-name">' + esc(d.name) + '</div><div class="c-rel">' + esc(d.spec) + (d.office ? ' &middot; ' + esc(d.office) : '') + '</div></div>' +
-      '<div class="row-edit">' +
-      '<button class="icon-btn" onclick="openDoctorForm(\'' + owner + '\',' + i + ')">&#9998;</button>' +
-      '<button class="icon-btn del" onclick="delDoctor(' + i + ')">&#10005;</button>' +
-      '</div></div>' +
+      '<div class="row-edit"><button class="icon-btn" onclick="openDoctorForm(\'' + owner + '\',' + i + ')">&#9998;</button>' +
+      '<button class="icon-btn del" onclick="delDoctor(' + i + ')">&#10005;</button></div></div>' +
       '<div class="c-actions">' + numRow(d.phone, 'Office') + '</div>' +
-      (d.notes ? '<div class="c-notes">' + esc(d.notes) + '</div>' : '') +
-      '</div>'
+      (d.notes ? '<div class="c-notes">' + esc(d.notes) + '</div>' : '') + '</div>'
     ).join('');
   });
 }
 function openDoctorForm(owner, index = -1) {
   doctorOwner = owner; doctorIndex = index;
-  const d = index >= 0 ? data.doctors[index] : { name: '', spec: '', phone: '', office: '', notes: '' };
+  const d = index >= 0 ? data.doctors[index] : { name:'', spec:'', phone:'', office:'', notes:'' };
   document.getElementById('doctorTitle').textContent = (index >= 0 ? 'Edit' : 'Add') + ' doctor - ' + owner;
   document.getElementById('dr-name').value = d.name;
   document.getElementById('dr-spec').value = d.spec;
@@ -1346,29 +1520,17 @@ function openDoctorForm(owner, index = -1) {
   openModal('doctorModal');
 }
 function saveDoctor() {
-  const d = {
-    owner: doctorOwner,
-    name: document.getElementById('dr-name').value.trim(),
-    spec: document.getElementById('dr-spec').value.trim(),
-    phone: document.getElementById('dr-phone').value.trim(),
-    office: document.getElementById('dr-office').value.trim(),
-    notes: document.getElementById('dr-notes').value.trim()
-  };
+  const d = { owner: doctorOwner, name: document.getElementById('dr-name').value.trim(), spec: document.getElementById('dr-spec').value.trim(), phone: document.getElementById('dr-phone').value.trim(), office: document.getElementById('dr-office').value.trim(), notes: document.getElementById('dr-notes').value.trim() };
   if (!d.name || !d.phone) { alert('Name and phone number are required.'); return; }
   if (doctorIndex >= 0) { d.owner = data.doctors[doctorIndex].owner; data.doctors[doctorIndex] = d; }
   else data.doctors.push(d);
-  persist('doctors');
-  renderDoctors();
-  closeModal('doctorModal');
+  persist('doctors'); renderDoctors(); closeModal('doctorModal');
 }
 function delDoctor(i) {
   if (!confirm('Remove ' + data.doctors[i].name + '?')) return;
-  data.doctors.splice(i, 1);
-  persist('doctors');
-  renderDoctors();
+  data.doctors.splice(i, 1); persist('doctors'); renderDoctors();
 }
 
-// ---------- medical profiles + meds ----------
 function medRows(ownerKey, ownerLabel) {
   const personMeds = data.meds.map((m, mi) => ({ ...m, _i: mi })).filter(m => m.owner === ownerKey);
   const rows = personMeds.length
@@ -1389,10 +1551,7 @@ function renderMedical() {
     const el = document.getElementById('medical-' + owner);
     if (!el) return;
     const p = data.profiles[owner];
-    if (!p) {
-      el.innerHTML = '<button class="setup-profile" onclick="openProfileForm(\'' + owner + '\')">+ Set up ' + owner + '\u2019s profile</button>';
-      return;
-    }
+    if (!p) { el.innerHTML = '<button class="setup-profile" onclick="openProfileForm(\'' + owner + '\')">+ Set up ' + owner + '\u2019s profile</button>'; return; }
     el.innerHTML = '<div class="card person-card ' + owner.toLowerCase() + '">' +
       '<div class="p-head"><div class="p-name">' + esc(owner) + '</div>' +
       '<div class="row-edit"><button class="icon-btn" onclick="openProfileForm(\'' + owner + '\')">&#9998;</button></div></div>' +
@@ -1402,14 +1561,12 @@ function renderMedical() {
       '<div class="p-item warn wide"><div class="k">Allergies</div><div class="v">' + esc(p.allergies || 'Not listed') + '</div></div>' +
       (p.conditions ? '<div class="p-item wide"><div class="k">Conditions</div><div class="v">' + esc(p.conditions) + '</div></div>' : '') +
       (p.notes ? '<div class="p-item wide"><div class="k">Notes</div><div class="v">' + esc(p.notes) + '</div></div>' : '') +
-      '</div>' +
-      medRows(owner, owner) +
-      '</div>';
+      '</div>' + medRows(owner, owner) + '</div>';
   });
 }
 function openProfileForm(owner) {
   profileOwner = owner;
-  const p = data.profiles[owner] || { dob: '', blood: '', allergies: '', conditions: '', notes: '' };
+  const p = data.profiles[owner] || { dob:'', blood:'', allergies:'', conditions:'', notes:'' };
   document.getElementById('profileTitle').textContent = owner + '\u2019s profile';
   document.getElementById('p-dob').value = p.dob || '';
   document.getElementById('p-blood').value = p.blood || '';
@@ -1419,20 +1576,12 @@ function openProfileForm(owner) {
   openModal('profileModal');
 }
 function saveProfile() {
-  data.profiles[profileOwner] = {
-    dob: document.getElementById('p-dob').value.trim(),
-    blood: document.getElementById('p-blood').value.trim(),
-    allergies: document.getElementById('p-allergies').value.trim(),
-    conditions: document.getElementById('p-conditions').value.trim(),
-    notes: document.getElementById('p-notes').value.trim()
-  };
-  persist('profiles');
-  renderMedical();
-  closeModal('profileModal');
+  data.profiles[profileOwner] = { dob: document.getElementById('p-dob').value.trim(), blood: document.getElementById('p-blood').value.trim(), allergies: document.getElementById('p-allergies').value.trim(), conditions: document.getElementById('p-conditions').value.trim(), notes: document.getElementById('p-notes').value.trim() };
+  persist('profiles'); renderMedical(); closeModal('profileModal');
 }
 function openMedForm(ownerKey, ownerLabel, index = -1) {
   medOwner = ownerKey; medIndex = index;
-  const m = index >= 0 ? data.meds[index] : { name: '', dose: '', notes: '' };
+  const m = index >= 0 ? data.meds[index] : { name:'', dose:'', notes:'' };
   document.getElementById('medTitle').textContent = (index >= 0 ? 'Edit' : 'Add') + ' medication - ' + ownerLabel;
   document.getElementById('m-name').value = m.name;
   document.getElementById('m-dose').value = m.dose;
@@ -1440,57 +1589,36 @@ function openMedForm(ownerKey, ownerLabel, index = -1) {
   openModal('medModal');
 }
 function saveMed() {
-  const m = {
-    owner: medOwner,
-    name: document.getElementById('m-name').value.trim(),
-    dose: document.getElementById('m-dose').value.trim(),
-    notes: document.getElementById('m-notes').value.trim()
-  };
+  const m = { owner: medOwner, name: document.getElementById('m-name').value.trim(), dose: document.getElementById('m-dose').value.trim(), notes: document.getElementById('m-notes').value.trim() };
   if (!m.name) { alert('Medication name is required.'); return; }
   if (medIndex >= 0) { m.owner = data.meds[medIndex].owner; data.meds[medIndex] = m; }
   else data.meds.push(m);
-  persist('meds');
-  renderMedical();
-  renderPets();
-  closeModal('medModal');
+  persist('meds'); renderMedical(); renderPets(); closeModal('medModal');
 }
 function delMed(i) {
   if (!confirm('Remove ' + data.meds[i].name + '?')) return;
-  data.meds.splice(i, 1);
-  persist('meds');
-  renderMedical();
-  renderPets();
+  data.meds.splice(i, 1); persist('meds'); renderMedical(); renderPets();
 }
 
-// ---------- pets ----------
 function petById(id) { return data.pets.find(p => p.id === id); }
 function renderPets() {
   const el = document.getElementById('pets-list');
   if (!el) return;
-  if (!data.pets.length) {
-    el.innerHTML = '<div class="empty">No pets yet - tap Edit, then + Add pet.</div>';
-    return;
-  }
+  if (!data.pets.length) { el.innerHTML = '<div class="empty">No pets yet - tap Edit, then + Add pet.</div>'; return; }
   el.innerHTML = data.pets.map((p, i) => {
-    const petDocTiles = data.petdocs
-      .map((d, di) => ({ d, di }))
-      .filter(x => x.d.petId === p.id)
-      .map(({ d, di }) => docTile(d, di, 'petdocs'));
+    const petDocTiles = data.petdocs.map((d, di) => ({ d, di })).filter(x => x.d.petId === p.id).map(({ d, di }) => docTile(d, di, 'petdocs'));
     petDocTiles.push('<button class="upload-tile" onclick="pickFile(\'petdocs\',\'' + jsq(p.id) + '\')"><span class="plus">+</span>Add vaccine or record</button>');
     return '<div class="card person-card pet">' +
       '<div class="p-head"><div><div class="pet-name">' + esc(p.name) + '</div><div class="p-sub">' + esc(p.breed) + '</div></div>' +
-      '<div class="row-edit">' +
-      '<button class="icon-btn" onclick="openPetForm(' + i + ')">&#9998;</button>' +
-      '<button class="icon-btn del" onclick="delPet(' + i + ')">&#10005;</button>' +
-      '</div></div>' +
+      '<div class="row-edit"><button class="icon-btn" onclick="openPetForm(' + i + ')">&#9998;</button>' +
+      '<button class="icon-btn del" onclick="delPet(' + i + ')">&#10005;</button></div></div>' +
       '<div class="p-grid">' +
       (p.dob ? '<div class="p-item"><div class="k">DOB</div><div class="v">' + esc(p.dob) + '</div></div>' : '') +
       (p.chip ? '<div class="p-item"><div class="k">Microchip</div><div class="v">' + esc(p.chip) + '</div></div>' : '') +
       '<div class="p-item warn wide"><div class="k">Allergies</div><div class="v">' + esc(p.allergies || 'Not listed') + '</div></div>' +
       (p.conditions ? '<div class="p-item wide"><div class="k">Conditions</div><div class="v">' + esc(p.conditions) + '</div></div>' : '') +
       (p.notes ? '<div class="p-item wide"><div class="k">Notes</div><div class="v">' + esc(p.notes) + '</div></div>' : '') +
-      '</div>' +
-      medRows(p.id, p.name) +
+      '</div>' + medRows(p.id, p.name) +
       '<div class="med-rows"><div class="k-row">Vaccines &amp; Records</div>' +
       '<div class="docs-grid in-card">' + petDocTiles.join('') + '</div></div>' +
       '<button class="share-pet" onclick="sharePetSummary(\'' + jsq(p.id) + '\')">' + SHARE_SVG + 'Share ' + esc(p.name) + '\u2019s info</button>' +
@@ -1499,7 +1627,7 @@ function renderPets() {
 }
 function openPetForm(index = -1) {
   petIndex = index;
-  const p = index >= 0 ? data.pets[index] : { name: '', breed: '', dob: '', chip: '', allergies: '', conditions: '', notes: '' };
+  const p = index >= 0 ? data.pets[index] : { name:'', breed:'', dob:'', chip:'', allergies:'', conditions:'', notes:'' };
   document.getElementById('petTitle').textContent = index >= 0 ? 'Edit ' + p.name : 'Add pet';
   document.getElementById('pet-name').value = p.name;
   document.getElementById('pet-breed').value = p.breed;
@@ -1511,78 +1639,44 @@ function openPetForm(index = -1) {
   openModal('petModal');
 }
 function savePet() {
-  const p = {
-    name: document.getElementById('pet-name').value.trim(),
-    breed: document.getElementById('pet-breed').value.trim(),
-    dob: document.getElementById('pet-dob').value.trim(),
-    chip: document.getElementById('pet-chip').value.trim(),
-    allergies: document.getElementById('pet-allergies').value.trim(),
-    conditions: document.getElementById('pet-conditions').value.trim(),
-    notes: document.getElementById('pet-notes').value.trim()
-  };
+  const p = { name: document.getElementById('pet-name').value.trim(), breed: document.getElementById('pet-breed').value.trim(), dob: document.getElementById('pet-dob').value.trim(), chip: document.getElementById('pet-chip').value.trim(), allergies: document.getElementById('pet-allergies').value.trim(), conditions: document.getElementById('pet-conditions').value.trim(), notes: document.getElementById('pet-notes').value.trim() };
   if (!p.name) { alert('Name is required.'); return; }
   if (petIndex >= 0) { p.id = data.pets[petIndex].id; data.pets[petIndex] = p; }
   else { p.id = 'pet_' + Date.now(); data.pets.push(p); }
-  persist('pets');
-  renderPets();
-  closeModal('petModal');
+  persist('pets'); renderPets(); closeModal('petModal');
 }
 function delPet(i) {
   const p = data.pets[i];
   if (!confirm('Remove ' + p.name + ', including meds and records?')) return;
-  data.meds = data.meds.filter(m => m.owner !== p.id);
-  persist('meds');
-  // remove this pet's files
+  data.meds = data.meds.filter(m => m.owner !== p.id); persist('meds');
   const toRemove = data.petdocs.filter(d => d.petId === p.id);
-  data.petdocs = data.petdocs.filter(d => d.petId !== p.id);
-  cacheLocal('petdocs');
+  data.petdocs = data.petdocs.filter(d => d.petId !== p.id); cacheLocal('petdocs');
   if (fb) toRemove.forEach(f => fb.deleteDoc(fb.fileRef(f.id)).catch(err => { console.error(err); setSync('error'); }));
-  data.pets.splice(i, 1);
-  persist('pets');
-  renderPets();
+  data.pets.splice(i, 1); persist('pets'); renderPets();
 }
 
-// ---------- documents ----------
 function docTile(d, i, collection) {
-  const face = d.type === 'pdf'
-    ? '<div class="pdf-face">PDF</div>'
-    : '<img src="' + d.data + '" alt="' + esc(d.name) + '">';
+  const face = d.type === 'pdf' ? '<div class="pdf-face">PDF</div>' : '<img src="' + d.data + '" alt="' + esc(d.name) + '">';
   return '<div class="doc-tile">' + face +
     '<div class="doc-label">' + esc(d.name) + '</div>' +
     (d.tag ? '<div class="doc-tag">' + esc(d.tag) + '</div>' : '') +
-    '<div class="doc-foot">' +
-    '<button class="view" onclick="openDoc(\'' + collection + '\',' + i + ')">View</button>' +
-    '<button onclick="shareDoc(\'' + collection + '\',' + i + ')">Share</button>' +
-    '</div>' +
-    '<div class="doc-manage">' +
-    '<button onclick="openDocMeta(\'' + collection + '\',' + i + ')">Rename</button>' +
-    '<button class="d" onclick="delDoc(\'' + collection + '\',' + i + ')">Delete</button>' +
-    '</div></div>';
+    '<div class="doc-foot"><button class="view" onclick="openDoc(\'' + collection + '\',' + i + ')">View</button>' +
+    '<button onclick="shareDoc(\'' + collection + '\',' + i + ')">Share</button></div>' +
+    '<div class="doc-manage"><button onclick="openDocMeta(\'' + collection + '\',' + i + ')">Rename</button>' +
+    '<button class="d" onclick="delDoc(\'' + collection + '\',' + i + ')">Delete</button></div></div>';
 }
 function renderDocs() {
   PEOPLE.forEach(owner => {
     const grid = document.getElementById('docs-' + owner);
     if (!grid) return;
-    const tiles = data.docs
-      .map((d, i) => ({ d, i }))
-      .filter(x => x.d.owner === owner)
-      .map(({ d, i }) => docTile(d, i, 'docs'));
+    const tiles = data.docs.map((d, i) => ({ d, i })).filter(x => x.d.owner === owner).map(({ d, i }) => docTile(d, i, 'docs'));
     tiles.push('<button class="upload-tile" onclick="pickFile(\'docs\',\'' + owner + '\')"><span class="plus">+</span>Add photo or PDF</button>');
     grid.innerHTML = tiles.join('');
   });
 }
-function pickFile(collection, target) {
-  docCollection = collection;
-  uploadTarget = target;
-  openModal('uploadChoice');
-}
+function pickFile(collection, target) { docCollection = collection; uploadTarget = target; openModal('uploadChoice'); }
 function readAsDataURL(file) {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
+  return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file); });
 }
 function compressImage(file) {
   return new Promise((resolve, reject) => {
@@ -1598,46 +1692,27 @@ function compressImage(file) {
         c.getContext('2d').drawImage(img, 0, 0, w, h);
         resolve(c.toDataURL('image/jpeg', 0.82));
       };
-      img.onerror = reject;
-      img.src = src;
+      img.onerror = reject; img.src = src;
     }).catch(reject);
   });
 }
 async function handleFile(ev) {
-  const file = ev.target.files[0];
-  ev.target.value = '';
+  const file = ev.target.files[0]; ev.target.value = '';
+  const scan = scanMode; scanMode = false;
   if (!file) return;
-  let dataUrl, type;
   if (file.type === 'application/pdf') {
     const limit = fb ? 650 * 1024 : 3 * 1024 * 1024;
-    if (file.size > limit) {
-      alert(fb
-        ? 'That PDF is too large to sync (limit ~650 KB). A photo or screenshot of it will work - images get compressed automatically.'
-        : 'That PDF is over 3 MB. A photo or screenshot of it will save more reliably.');
-      return;
-    }
-    dataUrl = await readAsDataURL(file);
-    type = 'pdf';
-  } else {
-    try { dataUrl = await compressImage(file); } catch (e) { alert('Could not read that image.'); return; }
-    type = 'image';
+    if (file.size > limit) { alert(fb ? 'That PDF is too large to sync (limit ~650 KB). A photo or screenshot works.' : 'That PDF is over 3 MB.'); return; }
+    saveNewFile(file.name, await readAsDataURL(file), 'pdf'); return;
   }
-  if (fb && dataUrl.length > 950000) {
-    alert('That file is too large to sync. Try a smaller photo or a screenshot.');
-    return;
-  }
-  const entry = {
-    id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-    kind: docCollection === 'docs' ? 'doc' : 'petdoc',
-    name: file.name,
-    tag: '',
-    type,
-    data: dataUrl,
-    createdAt: Date.now()
-  };
-  if (entry.kind === 'doc') entry.owner = uploadTarget;
-  else entry.petId = uploadTarget;
-  // optimistic local add; the snapshot will confirm
+  let dataUrl;
+  try { dataUrl = await compressImage(file); } catch (e) { alert('Could not read that image.'); return; }
+  openEditor(dataUrl, { scan }, edited => saveNewFile(scan ? 'Scanned document' : file.name, edited, 'image'));
+}
+function saveNewFile(name, dataUrl, type) {
+  if (fb && dataUrl.length > 950000) { alert('That file is too large to sync. Try a smaller photo or a screenshot.'); return; }
+  const entry = { id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), kind: docCollection === 'docs' ? 'doc' : 'petdoc', name, tag: '', type, data: dataUrl, createdAt: Date.now() };
+  if (entry.kind === 'doc') entry.owner = uploadTarget; else entry.petId = uploadTarget;
   (entry.kind === 'petdoc' ? data.petdocs : data.docs).push(entry);
   cacheLocal(entry.kind === 'petdoc' ? 'petdocs' : 'docs');
   if (fb) fb.setDoc(fb.fileRef(entry.id), entry).catch(err => { console.error(err); setSync('error', err); toast('Upload failed to sync'); });
@@ -1645,450 +1720,330 @@ async function handleFile(ev) {
 }
 function getDoc(collection, i) { return collection === 'docs' ? data.docs[i] : data.petdocs[i]; }
 
-// ---------- in-app viewer ----------
 let currentDoc = null;
 function openDoc(collection, i) {
   currentDoc = { collection, i };
   const d = getDoc(collection, i);
   const body = document.getElementById('viewerBody');
-  if (d.type === 'pdf') {
-    body.innerHTML = '<iframe src="' + d.data + '"></iframe>';
-  } else {
-    body.innerHTML = '<div style="text-align:center;max-height:100%;">' +
-      '<img src="' + d.data + '" alt="' + esc(d.name) + '">' +
-      '<div style="color:rgba(255,255,255,0.55);font-size:0.75rem;font-weight:700;margin-top:10px;">Tip: press and hold the image to share or save it</div>' +
-      '</div>';
-  }
+  if (d.type === 'pdf') { body.innerHTML = '<iframe src="' + d.data + '"></iframe>'; }
+  else { body.innerHTML = '<div style="text-align:center;max-height:100%;"><img src="' + d.data + '" alt="' + esc(d.name) + '"><div style="color:rgba(255,255,255,0.55);font-size:0.75rem;font-weight:700;margin-top:10px;">Tip: press and hold the image to share or save it</div></div>'; }
+  document.getElementById('viewerEditBtn').style.display = d.type === 'pdf' ? 'none' : '';
   document.getElementById('viewer').classList.add('open');
 }
-function closeViewer() {
-  document.getElementById('viewer').classList.remove('open');
-  document.getElementById('viewerBody').innerHTML = '';
-  currentDoc = null;
-}
+function closeViewer() { document.getElementById('viewer').classList.remove('open'); document.getElementById('viewerBody').innerHTML = ''; currentDoc = null; }
 function shareCurrentDoc() { if (currentDoc) shareDoc(currentDoc.collection, currentDoc.i); }
 function downloadCurrentDoc() { if (currentDoc) downloadDoc(currentDoc.collection, currentDoc.i); }
+function editCurrentDoc() {
+  if (!currentDoc) return;
+  const { collection, i } = currentDoc; const d = getDoc(collection, i);
+  if (!d || d.type === 'pdf') return;
+  openEditor(d.data, {}, edited => {
+    if (fb && edited.length > 950000) { alert('The edited photo is too large to sync.'); return; }
+    d.data = edited; cacheLocal(collection);
+    if (fb) fb.setDoc(fb.fileRef(d.id), { data: d.data }, { merge: true }).catch(err => { console.error(err); setSync('error', err); toast('Edit failed to sync'); });
+    renderDocs(); renderPets(); if (currentDoc) openDoc(collection, i); toast('Photo updated');
+  });
+}
+
+const SCAN_PREVIEW_CSS = 'grayscale(1) contrast(1.4) brightness(1.1)';
+let edit = null, cropDrag = null;
+function openEditor(src, opts, onSave) {
+  const img = new Image();
+  img.onload = () => { edit = { img, rot: 0, scan: !!(opts && opts.scan), scale: 1, crop: null, onSave }; document.getElementById('editor').classList.add('open'); updateScanBtn(); requestAnimationFrame(() => editorDraw(true)); };
+  img.onerror = () => alert('Could not open that image for editing.');
+  img.src = src;
+}
+function cancelEditor() { document.getElementById('editor').classList.remove('open'); edit = null; }
+function saveEditor() {
+  if (!edit) return;
+  let out; try { out = editorExport(); } catch (e) { alert('Could not save the edited photo.'); return; }
+  const cb = edit.onSave; cancelEditor(); cb(out);
+}
+function rotateEditor(dir) { if (!edit) return; edit.rot = (edit.rot + dir + 4) % 4; editorDraw(true); }
+function resetEditor() { if (!edit) return; edit.rot = 0; editorDraw(true); }
+function toggleScan() { if (!edit) return; edit.scan = !edit.scan; updateScanBtn(); document.getElementById('editCanvas').style.filter = edit.scan ? SCAN_PREVIEW_CSS : ''; }
+function updateScanBtn() { document.getElementById('scanToggle').classList.toggle('on', !!(edit && edit.scan)); }
+function editorDraw(resetCrop) {
+  if (!edit) return;
+  const stage = document.getElementById('editorStage');
+  const maxW = Math.max(60, stage.clientWidth - 40), maxH = Math.max(60, stage.clientHeight - 40);
+  const turned = edit.rot % 2 === 1;
+  const iw = turned ? edit.img.naturalHeight : edit.img.naturalWidth;
+  const ih = turned ? edit.img.naturalWidth : edit.img.naturalHeight;
+  const s = Math.min(maxW / iw, maxH / ih);
+  const w = Math.max(1, Math.round(iw * s)), h = Math.max(1, Math.round(ih * s));
+  const c = document.getElementById('editCanvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  ctx.save(); ctx.translate(w / 2, h / 2); ctx.rotate(edit.rot * Math.PI / 2);
+  ctx.drawImage(edit.img, -(turned ? h : w) / 2, -(turned ? w : h) / 2, turned ? h : w, turned ? w : h);
+  ctx.restore();
+  c.style.filter = edit.scan ? SCAN_PREVIEW_CSS : '';
+  edit.scale = s;
+  if (resetCrop || !edit.crop) edit.crop = { x: 0, y: 0, w, h };
+  positionCropBox();
+}
+function positionCropBox() { const b = document.getElementById('cropBox'); b.style.left = edit.crop.x + 'px'; b.style.top = edit.crop.y + 'px'; b.style.width = edit.crop.w + 'px'; b.style.height = edit.crop.h + 'px'; }
+function cropDown(e, mode) {
+  if (!edit) return; e.preventDefault(); e.stopPropagation();
+  cropDrag = { mode, x: e.clientX, y: e.clientY, start: Object.assign({}, edit.crop) };
+  window.addEventListener('pointermove', cropMove); window.addEventListener('pointerup', cropUp); window.addEventListener('pointercancel', cropUp);
+}
+function cropMove(e) {
+  if (!cropDrag || !edit) return; e.preventDefault();
+  const dx = e.clientX - cropDrag.x, dy = e.clientY - cropDrag.y;
+  const c = document.getElementById('editCanvas'); const W = c.width, H = c.height, MIN = 40;
+  const s = cropDrag.start, m = cropDrag.mode;
+  let x1 = s.x, y1 = s.y, x2 = s.x + s.w, y2 = s.y + s.h;
+  if (m === 'move') { x1 = Math.max(0, Math.min(W - s.w, s.x + dx)); y1 = Math.max(0, Math.min(H - s.h, s.y + dy)); x2 = x1 + s.w; y2 = y1 + s.h; }
+  else {
+    if (m.indexOf('w') !== -1) x1 = s.x + dx; if (m.indexOf('e') !== -1) x2 = s.x + s.w + dx;
+    if (m.indexOf('n') !== -1) y1 = s.y + dy; if (m.indexOf('s') !== -1) y2 = s.y + s.h + dy;
+    x2 = Math.max(MIN, Math.min(W, x2)); y2 = Math.max(MIN, Math.min(H, y2));
+    x1 = Math.max(0, Math.min(x2 - MIN, x1)); y1 = Math.max(0, Math.min(y2 - MIN, y1));
+  }
+  edit.crop = { x: x1, y: y1, w: x2 - x1, h: y2 - y1 }; positionCropBox();
+}
+function cropUp() { cropDrag = null; window.removeEventListener('pointermove', cropMove); window.removeEventListener('pointerup', cropUp); window.removeEventListener('pointercancel', cropUp); }
+window.addEventListener('resize', () => { if (edit) editorDraw(true); });
+function editorExport() {
+  const turned = edit.rot % 2 === 1; const nw = edit.img.naturalWidth, nh = edit.img.naturalHeight;
+  const rw = turned ? nh : nw, rh = turned ? nw : nh;
+  const off = document.createElement('canvas'); off.width = rw; off.height = rh;
+  const octx = off.getContext('2d'); octx.translate(rw / 2, rh / 2); octx.rotate(edit.rot * Math.PI / 2); octx.drawImage(edit.img, -nw / 2, -nh / 2);
+  const s = edit.scale || 1;
+  let cx = edit.crop.x / s, cy = edit.crop.y / s, cw = edit.crop.w / s, ch = edit.crop.h / s;
+  cx = Math.max(0, Math.min(rw - 1, cx)); cy = Math.max(0, Math.min(rh - 1, cy));
+  cw = Math.max(1, Math.min(rw - cx, cw)); ch = Math.max(1, Math.min(rh - cy, ch));
+  const maxDim = 1400, outScale = Math.min(1, maxDim / Math.max(cw, ch));
+  const out = document.createElement('canvas'); out.width = Math.max(1, Math.round(cw * outScale)); out.height = Math.max(1, Math.round(ch * outScale));
+  const ctx = out.getContext('2d'); ctx.drawImage(off, cx, cy, cw, ch, 0, 0, out.width, out.height);
+  if (edit.scan) applyScanFilter(ctx, out.width, out.height);
+  return out.toDataURL('image/jpeg', 0.85);
+}
+function applyScanFilter(ctx, w, h) {
+  const imgData = ctx.getImageData(0, 0, w, h); const px = imgData.data, n = px.length;
+  const hist = new Array(256).fill(0);
+  for (let i = 0; i < n; i += 4) { const g = Math.round(0.299 * px[i] + 0.587 * px[i+1] + 0.114 * px[i+2]); px[i] = g; hist[g]++; }
+  const total = n / 4; let lo = 0, hi = 255, acc = 0;
+  for (let i = 0; i < 256; i++) { acc += hist[i]; if (acc >= total * 0.04) { lo = i; break; } }
+  acc = 0; for (let i = 255; i >= 0; i--) { acc += hist[i]; if (acc >= total * 0.06) { hi = i; break; } }
+  if (hi - lo < 40) { lo = Math.max(0, lo - 20); hi = Math.min(255, hi + 20); }
+  const range = Math.max(1, hi - lo);
+  for (let i = 0; i < n; i += 4) { let v = (px[i] - lo) * 255 / range; v = v < 0 ? 0 : v > 255 ? 255 : Math.round(v); px[i] = px[i+1] = px[i+2] = v; }
+  ctx.putImageData(imgData, 0, 0);
+}
 
 function dataURLtoBlob(dataurl) {
   const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1], bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8 = new Uint8Array(n);
+  let n = bstr.length; const u8 = new Uint8Array(n);
   while (n--) u8[n] = bstr.charCodeAt(n);
   return new Blob([u8], { type: mime });
 }
-function docFileName(d, blob) {
-  const ext = d.type === 'pdf' ? '.pdf' : (blob.type.includes('png') ? '.png' : '.jpg');
-  return d.name.includes('.') ? d.name : d.name + ext;
-}
+function docFileName(d, blob) { const ext = d.type === 'pdf' ? '.pdf' : (blob.type.includes('png') ? '.png' : '.jpg'); return d.name.includes('.') ? d.name : d.name + ext; }
 function downloadDoc(collection, i) {
-  const d = getDoc(collection, i);
-  const blob = dataURLtoBlob(d.data);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = docFileName(d, blob);
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 4000);
-  toast('Saved - share it from your Photos or Files app');
+  const d = getDoc(collection, i); const blob = dataURLtoBlob(d.data);
+  const url = URL.createObjectURL(blob); const a = document.createElement('a');
+  a.href = url; a.download = docFileName(d, blob); document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 4000); toast('Saved - share it from your Photos or Files app');
 }
 async function shareDoc(collection, i) {
-  const d = getDoc(collection, i);
-  const blob = dataURLtoBlob(d.data);
-  const fname = docFileName(d, blob);
-  try {
-    const file = new File([blob], fname, { type: blob.type });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: d.name });
-      return;
-    }
-  } catch (e) {
-    if (e && e.name === 'AbortError') return;
-  }
-  try {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.target = '_blank';
-    a.rel = 'noopener';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-    toast('Opened in a new tab - use the share button there');
-    return;
-  } catch (e) {}
+  const d = getDoc(collection, i); const blob = dataURLtoBlob(d.data); const fname = docFileName(d, blob);
+  try { const file = new File([blob], fname, { type: blob.type }); if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: d.name }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+  try { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 60000); toast('Opened in a new tab'); return; } catch (e) {}
   downloadDoc(collection, i);
 }
 async function sharePetSummary(petId) {
-  const p = petById(petId);
-  if (!p) return;
-  const meds = data.meds.filter(m => m.owner === petId);
-  const docs = data.petdocs.filter(d => d.petId === petId);
+  const p = petById(petId); if (!p) return;
+  const meds = data.meds.filter(m => m.owner === petId); const docs = data.petdocs.filter(d => d.petId === petId);
   const lines = [p.name + (p.breed ? ' - ' + p.breed : '')];
-  if (p.dob) lines.push('DOB: ' + p.dob);
-  if (p.chip) lines.push('Microchip: ' + p.chip);
+  if (p.dob) lines.push('DOB: ' + p.dob); if (p.chip) lines.push('Microchip: ' + p.chip);
   lines.push('Allergies: ' + (p.allergies || 'None listed'));
   if (p.conditions) lines.push('Conditions: ' + p.conditions);
   if (meds.length) lines.push('Medications: ' + meds.map(m => m.name + (m.dose ? ' (' + m.dose + ')' : '')).join(', '));
   if (docs.length) lines.push('Records on file: ' + docs.map(d => d.name).join(', '));
   if (p.notes) lines.push('Notes: ' + p.notes);
   const text = lines.join('\n');
-  if (navigator.share) {
-    try { await navigator.share({ title: p.name + ' - pet info', text }); return; }
-    catch (e) { if (e && e.name === 'AbortError') return; }
-  }
-  copyNum(text);
-  toast('Copied ' + p.name + '\u2019s info - paste into a text or email');
+  if (navigator.share) { try { await navigator.share({ title: p.name + ' - pet info', text }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  copyNum(text); toast('Copied ' + p.name + '\u2019s info');
 }
-function openDocMeta(collection, i) {
-  docCollection = collection; docIndex = i;
-  const d = getDoc(collection, i);
-  document.getElementById('d-name').value = d.name;
-  document.getElementById('d-tag').value = d.tag || '';
-  openModal('docModal');
-}
+function openDocMeta(collection, i) { docCollection = collection; docIndex = i; const d = getDoc(collection, i); document.getElementById('d-name').value = d.name; document.getElementById('d-tag').value = d.tag || ''; openModal('docModal'); }
 function saveDocMeta() {
-  const d = getDoc(docCollection, docIndex);
-  d.name = document.getElementById('d-name').value.trim() || d.name;
-  d.tag = document.getElementById('d-tag').value.trim();
-  cacheLocal(docCollection);
-  if (fb) fb.setDoc(fb.fileRef(d.id), { name: d.name, tag: d.tag }, { merge: true }).catch(err => { console.error(err); setSync('error', err); });
-  renderDocs();
-  renderPets();
-  closeModal('docModal');
+  const d = getDoc(docCollection, docIndex); d.name = document.getElementById('d-name').value.trim() || d.name; d.tag = document.getElementById('d-tag').value.trim();
+  cacheLocal(docCollection); if (fb) fb.setDoc(fb.fileRef(d.id), { name: d.name, tag: d.tag }, { merge: true }).catch(err => { console.error(err); setSync('error', err); });
+  renderDocs(); renderPets(); closeModal('docModal');
 }
 function delDoc(collection, i) {
-  const d = getDoc(collection, i);
-  if (!confirm('Remove ' + d.name + '?')) return;
-  if (collection === 'docs') data.docs.splice(i, 1);
-  else data.petdocs.splice(i, 1);
-  cacheLocal(collection);
-  if (fb) fb.deleteDoc(fb.fileRef(d.id)).catch(err => { console.error(err); setSync('error', err); });
-  renderDocs();
-  renderPets();
+  const d = getDoc(collection, i); if (!confirm('Remove ' + d.name + '?')) return;
+  if (collection === 'docs') data.docs.splice(i, 1); else data.petdocs.splice(i, 1);
+  cacheLocal(collection); if (fb) fb.deleteDoc(fb.fileRef(d.id)).catch(err => { console.error(err); setSync('error', err); });
+  renderDocs(); renderPets();
 }
 
-// ---------- notes ----------
-function saveNotes(owner) {
-  data.notes[owner] = document.getElementById('notes-' + owner).value;
-  persist('notes');
-}
-function renderNotes() {
-  PEOPLE.forEach(owner => {
-    const el = document.getElementById('notes-' + owner);
-    if (el && document.activeElement !== el) el.value = (data.notes && data.notes[owner]) || '';
-  });
-}
+function saveNotes(owner) { data.notes[owner] = document.getElementById('notes-' + owner).value; persist('notes'); }
+function renderNotes() { PEOPLE.forEach(owner => { const el = document.getElementById('notes-' + owner); if (el && document.activeElement !== el) el.value = (data.notes && data.notes[owner]) || ''; }); }
+function renderAll() { renderContacts(); renderDoctors(); renderMedical(); renderDocs(); renderPets(); renderNotes(); renderResponder(); }
 
-// ---------- render all + init ----------
-function renderAll() {
-  renderContacts();
-  renderDoctors();
-  renderMedical();
-  renderDocs();
-  renderPets();
-  renderNotes();
-  renderResponder();
-}
-
-// ---------- first responder card ----------
 function responderCardHtml(r, opts) {
-  opts = opts || {};
-  const has = r && (r.address || r.house || r.ice1p);
-  if (!has) return '';
-  let ice = '';
-  if (r.ice1p) ice += numRow(r.ice1p, r.ice1n || 'Emergency contact');
-  if (r.ice2p) ice += numRow(r.ice2p, r.ice2n || 'Emergency contact');
+  opts = opts || {}; const has = r && (r.address || r.house || r.ice1p); if (!has) return '';
+  let ice = ''; if (r.ice1p) ice += numRow(r.ice1p, r.ice1n || 'Emergency contact'); if (r.ice2p) ice += numRow(r.ice2p, r.ice2n || 'Emergency contact');
   return '<div class="card person-card" style="--pc:var(--coral);">' +
     '<div class="p-head"><div class="p-name">In case of emergency</div>' +
-    (opts.editable ? '<div class="row-edit"><button class="icon-btn" onclick="openResponderForm()">&#9998;</button></div>' : '') +
-    '</div>' +
-    '<div class="p-grid">' +
-    (r.address ? '<div class="p-item warn wide"><div class="k">Address</div><div class="v">' + esc(r.address) + '</div></div>' : '') +
-    (r.house ? '<div class="p-item wide"><div class="k">Household</div><div class="v">' + esc(r.house) + '</div></div>' : '') +
-    '</div>' +
-    (ice ? '<div class="c-actions" style="margin-top:12px;">' + ice + '</div>' : '') +
-    '</div>';
+    (opts.editable ? '<div class="row-edit"><button class="icon-btn" onclick="openResponderForm()">&#9998;</button></div>' : '') + '</div>' +
+    '<div class="p-grid">' + (r.address ? '<div class="p-item warn wide"><div class="k">Address</div><div class="v">' + esc(r.address) + '</div></div>' : '') + (r.house ? '<div class="p-item wide"><div class="k">Household</div><div class="v">' + esc(r.house) + '</div></div>' : '') + '</div>' +
+    (ice ? '<div class="c-actions" style="margin-top:12px;">' + ice + '</div>' : '') + '</div>';
 }
 function renderResponder() {
-  const el = document.getElementById('responder-card');
-  if (!el) return;
+  const el = document.getElementById('responder-card'); if (!el) return;
   const card = responderCardHtml(data.responder, { editable: true });
   el.innerHTML = card || '<button class="setup-profile" onclick="openResponderForm()">+ Set up the first responder card</button>';
   if (card) el.innerHTML += '<button class="add-inline" onclick="openResponderForm()" style="display:block;">Edit card</button>';
 }
 function openResponderForm() {
   const r = data.responder || {};
-  document.getElementById('r-address').value = r.address || '';
-  document.getElementById('r-house').value = r.house || '';
-  document.getElementById('r-ice1n').value = r.ice1n || '';
-  document.getElementById('r-ice1p').value = r.ice1p || '';
-  document.getElementById('r-ice2n').value = r.ice2n || '';
-  document.getElementById('r-ice2p').value = r.ice2p || '';
+  document.getElementById('r-address').value = r.address || ''; document.getElementById('r-house').value = r.house || '';
+  document.getElementById('r-ice1n').value = r.ice1n || ''; document.getElementById('r-ice1p').value = r.ice1p || '';
+  document.getElementById('r-ice2n').value = r.ice2n || ''; document.getElementById('r-ice2p').value = r.ice2p || '';
   openModal('responderModal');
 }
 function saveResponder() {
-  data.responder = {
-    address: document.getElementById('r-address').value.trim(),
-    house: document.getElementById('r-house').value.trim(),
-    ice1n: document.getElementById('r-ice1n').value.trim(),
-    ice1p: document.getElementById('r-ice1p').value.trim(),
-    ice2n: document.getElementById('r-ice2n').value.trim(),
-    ice2p: document.getElementById('r-ice2p').value.trim()
-  };
-  persist('responder');
-  renderResponder();
-  closeModal('responderModal');
+  data.responder = { address: document.getElementById('r-address').value.trim(), house: document.getElementById('r-house').value.trim(), ice1n: document.getElementById('r-ice1n').value.trim(), ice1p: document.getElementById('r-ice1p').value.trim(), ice2n: document.getElementById('r-ice2n').value.trim(), ice2p: document.getElementById('r-ice2p').value.trim() };
+  persist('responder'); renderResponder(); closeModal('responderModal');
 }
 function openLockResponder() {
   const body = document.getElementById('lockResponderBody');
   const card = responderCardHtml(data.responder, { editable: false });
-  body.innerHTML = card || '<div class="empty">Nothing here yet - the first responder card gets set up inside the app (First Responder page).</div>';
+  body.innerHTML = card || '<div class="empty">Nothing here yet - set it up inside the app on the First Responder page.</div>';
   document.getElementById('lockResponder').classList.add('open');
 }
 
-// ---------- backup & restore ----------
 function exportBackup() {
   const payload = { app: 'emergency-hub', version: 1, exported: new Date().toISOString(), data: {} };
-  CORE_KEYS.forEach(k => payload.data[k] = data[k]);
-  payload.data.docs = data.docs;
-  payload.data.petdocs = data.petdocs;
+  CORE_KEYS.forEach(k => payload.data[k] = data[k]); payload.data.docs = data.docs; payload.data.petdocs = data.petdocs;
   const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'emergency-hub-backup-' + new Date().toISOString().slice(0, 10) + '.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 4000);
-  toast('Backup saved to your files');
+  const url = URL.createObjectURL(blob); const a = document.createElement('a');
+  a.href = url; a.download = 'emergency-hub-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 4000); toast('Backup saved to your files');
 }
 function importBackup(ev) {
-  const file = ev.target.files[0];
-  ev.target.value = '';
-  if (!file) return;
+  const file = ev.target.files[0]; ev.target.value = ''; if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    let payload;
-    try { payload = JSON.parse(reader.result); } catch (e) { alert('That file is not a valid backup.'); return; }
+    let payload; try { payload = JSON.parse(reader.result); } catch (e) { alert('That file is not a valid backup.'); return; }
     if (!payload || payload.app !== 'emergency-hub' || !payload.data) { alert('That file is not an Emergency Hub backup.'); return; }
     if (!confirm('Restore from backup dated ' + (payload.exported || 'unknown') + '? This replaces current entries.')) return;
     CORE_KEYS.forEach(k => { if (payload.data[k] !== undefined) { data[k] = payload.data[k]; persist(k); } });
     if (Array.isArray(payload.data.docs)) { data.docs = payload.data.docs; cacheLocal('docs'); }
     if (Array.isArray(payload.data.petdocs)) { data.petdocs = payload.data.petdocs; cacheLocal('petdocs'); }
     if (fb) [...data.docs, ...data.petdocs].forEach(f => fb.setDoc(fb.fileRef(f.id), f).catch(err => { console.error(err); setSync('error', err); }));
-    renderAll();
-    toast('Backup restored');
+    renderAll(); toast('Backup restored');
   };
   reader.readAsText(file);
 }
 
-// ---------- input formatters (numeric keypads + auto-format) ----------
-function fmtPhone(v) {
-  const d = v.replace(/\D/g, '').slice(0, 10);
-  if (d.length < 4) return d;
-  if (d.length < 7) return d.slice(0, 3) + '-' + d.slice(3);
-  return d.slice(0, 3) + '-' + d.slice(3, 6) + '-' + d.slice(6);
-}
-function fmtDate(v) {
-  const d = v.replace(/\D/g, '').slice(0, 8);
-  if (d.length < 3) return d;
-  if (d.length < 5) return d.slice(0, 2) + '/' + d.slice(2);
-  return d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4);
-}
-function attachFmt(id, fmt) {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('input', () => { el.value = fmt(el.value); });
-}
+function fmtPhone(v) { const d = v.replace(/\D/g, '').slice(0, 10); if (d.length < 4) return d; if (d.length < 7) return d.slice(0, 3) + '-' + d.slice(3); return d.slice(0, 3) + '-' + d.slice(3, 6) + '-' + d.slice(6); }
+function fmtDate(v) { const d = v.replace(/\D/g, '').slice(0, 8); if (d.length < 3) return d; if (d.length < 5) return d.slice(0, 2) + '/' + d.slice(2); return d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4); }
+function attachFmt(id, fmt) { const el = document.getElementById(id); if (el) el.addEventListener('input', () => { el.value = fmt(el.value); }); }
 ['f-phone', 'dr-phone', 'r-ice1p', 'r-ice2p'].forEach(id => attachFmt(id, fmtPhone));
 ['p-dob', 'pet-dob'].forEach(id => attachFmt(id, fmtDate));
 
-// ---------- printable emergency sheet ----------
 function prLine(k, v) { return v ? '<div class="pr-line"><b>' + esc(k) + ':</b> ' + esc(v) + '</div>' : ''; }
 function printSheet() {
   const r = data.responder || {};
   let h = '<h1>Emergency Information</h1><div class="pr-date">Printed ' + new Date().toLocaleDateString() + ' &mdash; keep with household papers</div>';
-  if (r.address || r.house || r.ice1p) {
-    h += '<h2>Home</h2>' +
-      prLine('Address', r.address) +
-      prLine('Household', r.house) +
-      prLine('Emergency contact', r.ice1p ? ((r.ice1n ? r.ice1n + ' - ' : '') + r.ice1p) : '') +
-      prLine('Emergency contact', r.ice2p ? ((r.ice2n ? r.ice2n + ' - ' : '') + r.ice2p) : '');
-  }
+  if (r.address || r.house || r.ice1p) { h += '<h2>Home</h2>' + prLine('Address', r.address) + prLine('Household', r.house) + prLine('Emergency contact', r.ice1p ? ((r.ice1n ? r.ice1n + ' - ' : '') + r.ice1p) : '') + prLine('Emergency contact', r.ice2p ? ((r.ice2n ? r.ice2n + ' - ' : '') + r.ice2p) : ''); }
   PEOPLE.forEach(o => {
-    const p = data.profiles[o];
-    const meds = data.meds.filter(m => m.owner === o);
-    const drs = data.doctors.filter(d => d.owner === o);
-    const cts = data.contacts.filter(c => c.owner === o);
+    const p = data.profiles[o]; const meds = data.meds.filter(m => m.owner === o); const drs = data.doctors.filter(d => d.owner === o); const cts = data.contacts.filter(c => c.owner === o);
     h += '<h2>' + esc(o) + '</h2>';
-    if (p) {
-      h += prLine('DOB', p.dob) + prLine('Blood type', p.blood) +
-        prLine('Allergies', p.allergies || 'None listed') +
-        prLine('Conditions', p.conditions) + prLine('Notes', p.notes);
-    }
+    if (p) { h += prLine('DOB', p.dob) + prLine('Blood type', p.blood) + prLine('Allergies', p.allergies || 'None listed') + prLine('Conditions', p.conditions) + prLine('Notes', p.notes); }
     if (meds.length) h += prLine('Medications', meds.map(m => m.name + (m.dose ? ' (' + m.dose + ')' : '')).join('; '));
     if (drs.length) h += prLine('Doctors', drs.map(d => d.name + (d.spec ? ' - ' + d.spec : '') + (d.phone ? ', ' + d.phone : '')).join('; '));
     if (cts.length) h += prLine('Contacts', cts.map(c => c.name + (c.rel ? ' (' + c.rel + ')' : '') + ' ' + c.phone).join('; '));
-    const n = (data.notes && data.notes[o]) || '';
-    if (n) h += prLine('Insurance notes', n);
+    const n = (data.notes && data.notes[o]) || ''; if (n) h += prLine('Insurance notes', n);
   });
   const vets = data.contacts.filter(c => c.owner === 'Vets');
   if (data.pets.length || vets.length) {
-    h += '<h2>Pets</h2>';
-    if (vets.length) h += prLine('Vets', vets.map(c => c.name + ' ' + c.phone).join('; '));
+    h += '<h2>Pets</h2>'; if (vets.length) h += prLine('Vets', vets.map(c => c.name + ' ' + c.phone).join('; '));
     data.pets.forEach(p => {
-      const meds = data.meds.filter(m => m.owner === p.id);
-      const vax = data.petdocs.filter(d => d.petId === p.id);
-      h += '<h3>' + esc(p.name) + (p.breed ? ' - ' + esc(p.breed) : '') + '</h3>' +
-        prLine('DOB', p.dob) + prLine('Microchip', p.chip) +
-        prLine('Allergies', p.allergies || 'None listed') +
-        prLine('Conditions', p.conditions) + prLine('Notes', p.notes);
+      const meds = data.meds.filter(m => m.owner === p.id); const vax = data.petdocs.filter(d => d.petId === p.id);
+      h += '<h3>' + esc(p.name) + (p.breed ? ' - ' + esc(p.breed) : '') + '</h3>' + prLine('DOB', p.dob) + prLine('Microchip', p.chip) + prLine('Allergies', p.allergies || 'None listed') + prLine('Conditions', p.conditions) + prLine('Notes', p.notes);
       if (meds.length) h += prLine('Medications', meds.map(m => m.name + (m.dose ? ' (' + m.dose + ')' : '')).join('; '));
       if (vax.length) h += prLine('Records on file', vax.map(d => d.name + (d.tag ? ' [' + d.tag + ']' : '')).join('; '));
     });
   }
-  document.getElementById('printSheet').innerHTML = h;
-  window.print();
+  document.getElementById('printSheet').innerHTML = h; window.print();
 }
 
-// ---------- biometric (Face ID / fingerprint) unlock ----------
+// ---------- biometric ----------
 function b64buf(buf) { return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))); }
 function unb64(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
 function bioStored(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function bioStore(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
-function renderBioButton() {
-  const btn = document.getElementById('bioBtn');
-  if (btn && window.PublicKeyCredential && bioStored('eh_bio_cred')) btn.style.display = 'inline-block';
-}
+function renderBioButton() { const btn = document.getElementById('bioBtn'); if (btn && window.PublicKeyCredential && bioStored('eh_bio_cred')) btn.style.display = 'inline-block'; }
 async function enrollBio() {
   try {
-    const cred = await navigator.credentials.create({ publicKey: {
-      challenge: crypto.getRandomValues(new Uint8Array(32)),
-      rp: { name: 'Emergency Hub', id: location.hostname },
-      user: { id: crypto.getRandomValues(new Uint8Array(16)), name: 'household', displayName: 'Household' },
-      pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
-      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
-      timeout: 60000
-    }});
-    bioStore('eh_bio_cred', b64buf(cred.rawId));
-    bioStore('eh_bio_key', PIN_HASH);
-    renderBioButton();
-    toast('Face ID unlock enabled on this device');
+    const cred = await navigator.credentials.create({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), rp: { name: 'Emergency Hub', id: location.hostname }, user: { id: crypto.getRandomValues(new Uint8Array(16)), name: 'household', displayName: 'Household' }, pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }], authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' }, timeout: 60000 }});
+    bioStore('eh_bio_cred', b64buf(cred.rawId)); bioStore('eh_bio_key', PIN_HASH); renderBioButton(); toast('Face ID unlock enabled on this device');
   } catch (e) { console.warn('Biometric enrollment cancelled/failed:', e && e.name); }
 }
 async function maybeOfferBio() {
   if (bioStored('eh_bio_cred') || bioStored('eh_bio_declined')) return;
   if (!window.PublicKeyCredential) return;
-  let available = false;
-  try { available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); } catch (e) {}
+  let available = false; try { available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); } catch (e) {}
   if (!available) return;
-  if (confirm('Enable Face ID / fingerprint unlock on this device? The keypad code still works as a backup.')) enrollBio();
-  else bioStore('eh_bio_declined', '1');
+  if (confirm('Enable Face ID / fingerprint unlock on this device?')) enrollBio(); else bioStore('eh_bio_declined', '1');
 }
 async function bioUnlock() {
-  const credId = bioStored('eh_bio_cred');
-  if (!credId) return;
+  const credId = bioStored('eh_bio_cred'); if (!credId) return;
   try {
-    await navigator.credentials.get({ publicKey: {
-      challenge: crypto.getRandomValues(new Uint8Array(32)),
-      allowCredentials: [{ type: 'public-key', id: unb64(credId) }],
-      userVerification: 'required',
-      timeout: 60000
-    }});
+    await navigator.credentials.get({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), allowCredentials: [{ type: 'public-key', id: unb64(credId) }], userVerification: 'required', timeout: 60000 }});
     const key = bioStored('eh_bio_key');
-    if (key === PIN_HASH) {
-      try { sessionStorage.setItem('eh_key', key); } catch (e) {}
-      unlockApp(key);
-    }
-  } catch (e) { /* user cancelled Face ID - keypad still available */ }
+    if (key === PIN_HASH) { try { sessionStorage.setItem('eh_key', key); } catch (e) {} unlockApp(key); }
+  } catch (e) { /* user cancelled */ }
 }
 
-// ---------- connectivity + service worker ----------
 window.addEventListener('offline', () => setSync('offline'));
-window.addEventListener('online', () => {
-  if (fb) setSync('synced');
-  else if (HOUSEHOLD_ID) { setSync('local'); initFirebase(); }
-});
+window.addEventListener('online', () => { if (fb) setSync('synced'); else if (HOUSEHOLD_ID) { setSync('local'); initFirebase(); } });
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.register('./sw.js').then(reg => {
-    reg.addEventListener('updatefound', () => {
-      const nw = reg.installing;
-      if (!nw) return;
-      nw.addEventListener('statechange', () => {
-        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-          document.getElementById('updateBanner').classList.add('show');
-        }
-      });
-    });
+    reg.addEventListener('updatefound', () => { const nw = reg.installing; if (!nw) return; nw.addEventListener('statechange', () => { if (nw.state === 'installed' && navigator.serviceWorker.controller) document.getElementById('updateBanner').classList.add('show'); }); });
   }).catch(e => console.warn('SW registration failed:', e));
 }
 
-// ---------- PIN lock ----------
 let pinBuf = '';
-async function sha256Hex(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-function renderPinDots() {
-  document.querySelectorAll('#pinDots span').forEach((s, i) => s.classList.toggle('filled', i < pinBuf.length));
-}
-function pinDigit(d) {
-  if (pinBuf.length >= 4) return;
-  pinBuf += d;
-  renderPinDots();
-  if (pinBuf.length === 4) checkPin();
-}
-function pinBack() {
-  pinBuf = pinBuf.slice(0, -1);
-  renderPinDots();
-}
+async function sha256Hex(str) { const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)); return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join(''); }
+function renderPinDots() { document.querySelectorAll('#pinDots span').forEach((s, i) => s.classList.toggle('filled', i < pinBuf.length)); }
+function pinDigit(d) { if (pinBuf.length >= 4) return; pinBuf += d; renderPinDots(); if (pinBuf.length === 4) checkPin(); }
+function pinBack() { pinBuf = pinBuf.slice(0, -1); renderPinDots(); }
 async function checkPin() {
-  let h;
-  try { h = await sha256Hex(pinBuf + PIN_SALT); }
-  catch (e) { alert('This page needs to run over https for the code screen to work.'); return; }
-  if (h === PIN_HASH) {
-    try { sessionStorage.setItem('eh_key', h); } catch (e) {}
-    unlockApp(h);
-    setTimeout(maybeOfferBio, 700);
-  } else {
-    const dots = document.getElementById('pinDots');
-    dots.classList.add('shake');
-    setTimeout(() => { dots.classList.remove('shake'); pinBuf = ''; renderPinDots(); }, 380);
-  }
+  let h; try { h = await sha256Hex(pinBuf + PIN_SALT); } catch (e) { alert('This page needs to run over https for the code screen to work.'); return; }
+  if (h === PIN_HASH) { try { sessionStorage.setItem('eh_key', h); } catch (e) {} unlockApp(h); setTimeout(maybeOfferBio, 700); }
+  else { const dots = document.getElementById('pinDots'); dots.classList.add('shake'); setTimeout(() => { dots.classList.remove('shake'); pinBuf = ''; renderPinDots(); }, 380); }
 }
 function unlockApp(hash) {
   HOUSEHOLD_ID = HID_BASE + '-' + hash.slice(0, 16);
   document.getElementById('lockScreen').classList.add('hidden');
   renderAll();
-  initFirebase();
+  initFirebase(); // will show Google sign-in overlay if not yet authenticated
 }
 function lockNow() {
   try { sessionStorage.removeItem('eh_key'); } catch (e) {}
-  pinBuf = '';
-  renderPinDots();
+  pinBuf = ''; renderPinDots();
   if (editing) toggleEdit();
   document.getElementById('lockScreen').classList.remove('hidden');
+  document.getElementById('signinOverlay').classList.remove('open');
   showPage('home');
 }
-// Keyboard support for the code screen
 document.addEventListener('keydown', e => {
   if (document.getElementById('lockScreen').classList.contains('hidden')) return;
-  if (e.key >= '0' && e.key <= '9') pinDigit(e.key);
-  else if (e.key === 'Backspace') pinBack();
+  if (e.key >= '0' && e.key <= '9') pinDigit(e.key); else if (e.key === 'Backspace') pinBack();
 });
 renderBioButton();
-// Already unlocked this session? Skip the code screen.
-// Otherwise, if Face ID is enrolled, offer it immediately - keypad stays available.
 (function () {
-  let saved = null;
-  try { saved = sessionStorage.getItem('eh_key'); } catch (e) {}
+  let saved = null; try { saved = sessionStorage.getItem('eh_key'); } catch (e) {}
   if (saved === PIN_HASH) { unlockApp(saved); return; }
   if (bioStored('eh_bio_cred') && window.PublicKeyCredential) setTimeout(bioUnlock, 400);
 })();
-
 </script>
 </body>
 </html>
