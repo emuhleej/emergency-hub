@@ -5,7 +5,7 @@ doctors, insurance documents, and pet records with vaccine uploads, synced
 in real time between both phones via Firebase.
 
 ## Entry code
-The app opens to a keypad lock screen. Code: ****.
+The app opens to a keypad lock screen. Code: **2580**.
 It stays unlocked until the app is fully closed. The code is never stored
 in the page in readable form, and your Firestore data path is derived from
 it - the wrong code can't reach the data.
@@ -31,6 +31,14 @@ it - the wrong code can't reach the data.
   so it opens fullscreen like an app.
 
 ## New in this version
+- **Face ID / fingerprint unlock** - offered after your first keypad unlock
+  on each device; afterwards the app prompts it automatically on open, with
+  the keypad always available as backup
+- **Lock button** - the padlock in the header locks the app instantly
+- **Print sheet** - button on the home page prints (or saves as PDF) a
+  one-page summary of everything for the fridge or glovebox
+- **Update banner** - when a new version is deployed, a banner appears;
+  tap it to update
 - **Works offline** - installs as a real app (Add to Home Screen) and opens
   instantly with the last-synced data, even with no signal
 - **First Responder card** - address, entry notes, household info, and ICE

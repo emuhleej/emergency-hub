@@ -541,6 +541,40 @@
   }
   .lock-overlay .lo-body { max-width: 680px; margin: 0 auto; }
 
+  .update-banner {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--teal); color: #fff;
+    padding: 15px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 0.88rem;
+    cursor: pointer;
+    z-index: 60;
+    box-shadow: 0 -4px 16px rgba(88,64,83,0.2);
+  }
+  .update-banner.show { display: block; }
+
+  #printSheet { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    #printSheet, #printSheet * { visibility: visible; }
+    #printSheet {
+      display: block;
+      position: absolute; left: 0; top: 0; width: 100%;
+      color: #000;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 11pt;
+      line-height: 1.4;
+      padding: 0.15in;
+    }
+    #printSheet h1 { font-size: 16pt; margin-bottom: 2pt; }
+    #printSheet h2 { font-size: 13pt; margin: 10pt 0 3pt; border-bottom: 1.5px solid #000; padding-bottom: 2pt; }
+    #printSheet h3 { font-size: 11.5pt; margin: 7pt 0 2pt; }
+    #printSheet .pr-line { margin: 2pt 0; }
+    #printSheet .pr-date { font-size: 9pt; color: #444; margin-bottom: 6pt; }
+  }
+
   /* ---------- PIN lock ---------- */
   .lock {
     position: fixed; inset: 0;
@@ -610,6 +644,7 @@
     <button onclick="pinDigit('0')">0</button>
     <button class="ghost" onclick="pinBack()">&#9003;</button>
   </div>
+  <button class="lock-responder" id="bioBtn" style="display:none;" onclick="bioUnlock()">&#128274; Unlock with Face ID</button>
   <button class="lock-responder" onclick="openLockResponder()">&#10010; First responder info</button>
 </div>
 
@@ -628,7 +663,10 @@
       <h1 id="pageTitle">Emergency <em>Hub</em></h1>
       <span class="sync-pill" id="syncPill" onclick="explainSync()" style="cursor:pointer;">Local</span>
     </div>
-    <button class="edit-toggle" id="editToggle" onclick="toggleEdit()">Edit</button>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="edit-toggle" onclick="lockNow()" aria-label="Lock" style="padding:8px 13px;">&#128274;</button>
+      <button class="edit-toggle" id="editToggle" onclick="toggleEdit()">Edit</button>
+    </div>
   </div>
 </div>
 
@@ -666,6 +704,7 @@
     <div class="backup-row">
       <button onclick="exportBackup()">&#8681; Export backup</button>
       <button onclick="document.getElementById('backupInput').click()">&#8682; Restore backup</button>
+      <button onclick="printSheet()">&#128424;&#65039; Print sheet</button>
     </div>
   </div>
 
@@ -936,6 +975,9 @@
   <div class="viewer-body" id="viewerBody"></div>
 </div>
 
+<div class="update-banner" id="updateBanner" onclick="location.reload()">A new version is ready &mdash; tap to update</div>
+<div id="printSheet"></div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1038,6 +1080,7 @@ function configLooksReal() {
 }
 
 async function initFirebase() {
+  if (fb) return; // already connected (e.g. re-unlock after using the lock button)
   if (!configLooksReal()) { setSync('local'); return; }
   try {
     const appM = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
@@ -1863,6 +1906,106 @@ function attachFmt(id, fmt) {
 ['f-phone', 'dr-phone', 'r-ice1p', 'r-ice2p'].forEach(id => attachFmt(id, fmtPhone));
 ['p-dob', 'pet-dob'].forEach(id => attachFmt(id, fmtDate));
 
+// ---------- printable emergency sheet ----------
+function prLine(k, v) { return v ? '<div class="pr-line"><b>' + esc(k) + ':</b> ' + esc(v) + '</div>' : ''; }
+function printSheet() {
+  const r = data.responder || {};
+  let h = '<h1>Emergency Information</h1><div class="pr-date">Printed ' + new Date().toLocaleDateString() + ' &mdash; keep with household papers</div>';
+  if (r.address || r.house || r.ice1p) {
+    h += '<h2>Home</h2>' +
+      prLine('Address', r.address) +
+      prLine('Household', r.house) +
+      prLine('Emergency contact', r.ice1p ? ((r.ice1n ? r.ice1n + ' - ' : '') + r.ice1p) : '') +
+      prLine('Emergency contact', r.ice2p ? ((r.ice2n ? r.ice2n + ' - ' : '') + r.ice2p) : '');
+  }
+  PEOPLE.forEach(o => {
+    const p = data.profiles[o];
+    const meds = data.meds.filter(m => m.owner === o);
+    const drs = data.doctors.filter(d => d.owner === o);
+    const cts = data.contacts.filter(c => c.owner === o);
+    h += '<h2>' + esc(o) + '</h2>';
+    if (p) {
+      h += prLine('DOB', p.dob) + prLine('Blood type', p.blood) +
+        prLine('Allergies', p.allergies || 'None listed') +
+        prLine('Conditions', p.conditions) + prLine('Notes', p.notes);
+    }
+    if (meds.length) h += prLine('Medications', meds.map(m => m.name + (m.dose ? ' (' + m.dose + ')' : '')).join('; '));
+    if (drs.length) h += prLine('Doctors', drs.map(d => d.name + (d.spec ? ' - ' + d.spec : '') + (d.phone ? ', ' + d.phone : '')).join('; '));
+    if (cts.length) h += prLine('Contacts', cts.map(c => c.name + (c.rel ? ' (' + c.rel + ')' : '') + ' ' + c.phone).join('; '));
+    const n = (data.notes && data.notes[o]) || '';
+    if (n) h += prLine('Insurance notes', n);
+  });
+  const vets = data.contacts.filter(c => c.owner === 'Vets');
+  if (data.pets.length || vets.length) {
+    h += '<h2>Pets</h2>';
+    if (vets.length) h += prLine('Vets', vets.map(c => c.name + ' ' + c.phone).join('; '));
+    data.pets.forEach(p => {
+      const meds = data.meds.filter(m => m.owner === p.id);
+      const vax = data.petdocs.filter(d => d.petId === p.id);
+      h += '<h3>' + esc(p.name) + (p.breed ? ' - ' + esc(p.breed) : '') + '</h3>' +
+        prLine('DOB', p.dob) + prLine('Microchip', p.chip) +
+        prLine('Allergies', p.allergies || 'None listed') +
+        prLine('Conditions', p.conditions) + prLine('Notes', p.notes);
+      if (meds.length) h += prLine('Medications', meds.map(m => m.name + (m.dose ? ' (' + m.dose + ')' : '')).join('; '));
+      if (vax.length) h += prLine('Records on file', vax.map(d => d.name + (d.tag ? ' [' + d.tag + ']' : '')).join('; '));
+    });
+  }
+  document.getElementById('printSheet').innerHTML = h;
+  window.print();
+}
+
+// ---------- biometric (Face ID / fingerprint) unlock ----------
+function b64buf(buf) { return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))); }
+function unb64(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
+function bioStored(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function bioStore(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function renderBioButton() {
+  const btn = document.getElementById('bioBtn');
+  if (btn && window.PublicKeyCredential && bioStored('eh_bio_cred')) btn.style.display = 'inline-block';
+}
+async function enrollBio() {
+  try {
+    const cred = await navigator.credentials.create({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      rp: { name: 'Emergency Hub', id: location.hostname },
+      user: { id: crypto.getRandomValues(new Uint8Array(16)), name: 'household', displayName: 'Household' },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
+      timeout: 60000
+    }});
+    bioStore('eh_bio_cred', b64buf(cred.rawId));
+    bioStore('eh_bio_key', PIN_HASH);
+    renderBioButton();
+    toast('Face ID unlock enabled on this device');
+  } catch (e) { console.warn('Biometric enrollment cancelled/failed:', e && e.name); }
+}
+async function maybeOfferBio() {
+  if (bioStored('eh_bio_cred') || bioStored('eh_bio_declined')) return;
+  if (!window.PublicKeyCredential) return;
+  let available = false;
+  try { available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); } catch (e) {}
+  if (!available) return;
+  if (confirm('Enable Face ID / fingerprint unlock on this device? The keypad code still works as a backup.')) enrollBio();
+  else bioStore('eh_bio_declined', '1');
+}
+async function bioUnlock() {
+  const credId = bioStored('eh_bio_cred');
+  if (!credId) return;
+  try {
+    await navigator.credentials.get({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials: [{ type: 'public-key', id: unb64(credId) }],
+      userVerification: 'required',
+      timeout: 60000
+    }});
+    const key = bioStored('eh_bio_key');
+    if (key === PIN_HASH) {
+      try { sessionStorage.setItem('eh_key', key); } catch (e) {}
+      unlockApp(key);
+    }
+  } catch (e) { /* user cancelled Face ID - keypad still available */ }
+}
+
 // ---------- connectivity + service worker ----------
 window.addEventListener('offline', () => setSync('offline'));
 window.addEventListener('online', () => {
@@ -1870,7 +2013,17 @@ window.addEventListener('online', () => {
   else if (HOUSEHOLD_ID) { setSync('local'); initFirebase(); }
 });
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  navigator.serviceWorker.register('./sw.js').catch(e => console.warn('SW registration failed:', e));
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const nw = reg.installing;
+      if (!nw) return;
+      nw.addEventListener('statechange', () => {
+        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+          document.getElementById('updateBanner').classList.add('show');
+        }
+      });
+    });
+  }).catch(e => console.warn('SW registration failed:', e));
 }
 
 // ---------- PIN lock ----------
@@ -1899,6 +2052,7 @@ async function checkPin() {
   if (h === PIN_HASH) {
     try { sessionStorage.setItem('eh_key', h); } catch (e) {}
     unlockApp(h);
+    setTimeout(maybeOfferBio, 700);
   } else {
     const dots = document.getElementById('pinDots');
     dots.classList.add('shake');
@@ -1911,17 +2065,28 @@ function unlockApp(hash) {
   renderAll();
   initFirebase();
 }
+function lockNow() {
+  try { sessionStorage.removeItem('eh_key'); } catch (e) {}
+  pinBuf = '';
+  renderPinDots();
+  if (editing) toggleEdit();
+  document.getElementById('lockScreen').classList.remove('hidden');
+  showPage('home');
+}
 // Keyboard support for the code screen
 document.addEventListener('keydown', e => {
   if (document.getElementById('lockScreen').classList.contains('hidden')) return;
   if (e.key >= '0' && e.key <= '9') pinDigit(e.key);
   else if (e.key === 'Backspace') pinBack();
 });
+renderBioButton();
 // Already unlocked this session? Skip the code screen.
+// Otherwise, if Face ID is enrolled, offer it immediately - keypad stays available.
 (function () {
   let saved = null;
   try { saved = sessionStorage.getItem('eh_key'); } catch (e) {}
-  if (saved === PIN_HASH) unlockApp(saved);
+  if (saved === PIN_HASH) { unlockApp(saved); return; }
+  if (bioStored('eh_bio_cred') && window.PublicKeyCredential) setTimeout(bioUnlock, 400);
 })();
 
 </script>
