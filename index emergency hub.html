@@ -1,0 +1,2111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emergency Hub</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#584053">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Emergency">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #453741;
+    --paper: #f6f4f1;
+    --card: #ffffff;
+    --line: #eee8ea;
+    --muted: #8b7d85;
+    --teal: #47938a;
+    --teal-dark: #397b73;
+    --teal-mid: #8dc6bf;
+    --teal-soft: #e7f2f0;
+    --plum: #584053;
+    --plum-deep: #46333f;
+    --plum-soft: #ece5ea;
+    --amber: #c4841f;
+    --amber-mid: #fcbc66;
+    --amber-soft: #fdf1dd;
+    --coral: #e0592f;
+    --coral-mid: #f97b4f;
+    --coral-soft: #fdeae2;
+    --shadow: 0 2px 12px rgba(88,64,83,0.07);
+    --shadow-lift: 0 6px 24px rgba(88,64,83,0.12);
+    --r: 20px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: "Nunito Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 70px;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 0 16px; }
+  h1, h2, .p-name, .cover-btn .t, .modal h3, .pet-name { font-family: "Fraunces", Georgia, serif; }
+
+  /* ---------- Header ---------- */
+  .top {
+    background: linear-gradient(135deg, var(--plum) 0%, var(--plum-deep) 100%);
+    color: #fff;
+    padding: 22px 0 20px;
+    margin-bottom: 20px;
+    border-radius: 0 0 28px 28px;
+  }
+  .top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .top-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .back-btn {
+    display: none;
+    border: none;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    border-radius: 12px;
+    width: 40px; height: 40px;
+    font-size: 1.15rem;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  body.subpage .back-btn { display: block; }
+  .top h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 400px) { .top h1 { font-size: 1.1rem; } }
+  .top h1 em { font-style: normal; color: var(--teal-mid); }
+  .edit-toggle {
+    border: none;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+  }
+  .edit-toggle.on { background: var(--amber-mid); color: var(--plum-deep); }
+  .sync-pill {
+    font-size: 0.58rem; font-weight: 800;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 4px 8px; border-radius: 999px;
+    background: rgba(255,255,255,0.14); color: rgba(255,255,255,0.75);
+    flex-shrink: 0;
+  }
+  .sync-pill.synced { background: rgba(141,198,191,0.28); color: #c8ebe5; }
+  .sync-pill.error { background: rgba(249,123,79,0.3); color: #ffc9b3; }
+
+  /* ---------- Pages ---------- */
+  .page { display: none; }
+  .page.active { display: block; animation: rise 0.28s ease; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------- Cover ---------- */
+  .cover-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 4px; }
+  .cover-btn {
+    border: none;
+    background: var(--card);
+    border-radius: 24px;
+    padding: 28px 16px 24px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    text-align: center;
+    font-family: inherit;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .cover-btn:active { transform: scale(0.97); box-shadow: var(--shadow-lift); }
+  .cover-btn .ico {
+    width: 58px; height: 58px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px;
+  }
+  .cover-btn .ico svg { width: 26px; height: 26px; }
+  .cover-btn.c-contacts .ico { background: var(--teal-soft); color: var(--teal); }
+  .cover-btn.c-medical .ico { background: var(--coral-soft); color: var(--coral); }
+  .cover-btn.c-docs .ico { background: var(--amber-soft); color: var(--amber); }
+  .cover-btn.c-pets .ico { background: var(--plum-soft); color: var(--plum); }
+  .cover-btn .t { font-weight: 700; font-size: 1.15rem; color: var(--ink); }
+  .cover-btn .s { font-size: 0.76rem; color: var(--muted); margin-top: 4px; font-weight: 600; }
+
+  /* ---------- Section bands ---------- */
+  .owner-band { display: flex; align-items: center; gap: 10px; margin: 26px 0 12px; }
+  .owner-band:first-child, .page > .owner-band:first-of-type { margin-top: 6px; }
+  .owner-chip {
+    font-size: 0.78rem; font-weight: 800;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 6px 16px; border-radius: 999px;
+  }
+  .owner-chip.em { background: var(--teal-soft); color: var(--teal); }
+  .owner-chip.hameed { background: var(--plum-soft); color: var(--plum); }
+  .owner-chip.pets { background: var(--amber-soft); color: var(--amber); }
+  .owner-band .rule { flex: 1; height: 1px; background: var(--line); }
+  .sub-band { display: flex; align-items: center; justify-content: space-between; margin: 18px 0 8px; }
+  .sub-band h2 { font-size: 0.95rem; font-weight: 700; color: var(--ink); }
+
+  .search {
+    width: 100%;
+    border: none;
+    border-radius: 16px;
+    padding: 14px 18px;
+    font-size: 16px;
+    font-family: inherit;
+    background: var(--card);
+    color: var(--ink);
+    margin-bottom: 8px;
+    box-shadow: var(--shadow);
+  }
+  .search:focus { outline: 2px solid var(--teal-mid); }
+  .search::placeholder { color: var(--muted); }
+
+  .add-btn {
+    display: none;
+    border: none;
+    background: var(--teal);
+    color: #fff;
+    border-radius: 999px;
+    padding: 7px 16px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  body.editing .add-btn { display: inline-block; }
+
+  /* ---------- Cards ---------- */
+  .card {
+    background: var(--card);
+    border-radius: var(--r);
+    padding: 16px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+  }
+  .c-top { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    flex-shrink: 0;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--teal-soft);
+    color: var(--teal);
+    font-weight: 800;
+    font-size: 0.95rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .avatar.doc { background: var(--coral-soft); color: var(--coral); }
+  .c-info { flex: 1; min-width: 0; }
+  .c-name { font-weight: 800; font-size: 1rem; }
+  .c-rel { color: var(--muted); font-size: 0.84rem; font-weight: 600; }
+  .c-notes { color: var(--muted); font-size: 0.83rem; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); white-space: pre-wrap; }
+  .c-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .num-row { display: flex; align-items: center; gap: 8px; }
+  .num-label { flex: 1; min-width: 0; font-size: 0.87rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .num-label small { color: var(--muted); font-weight: 600; display: block; font-size: 0.72rem; }
+  .act {
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    text-decoration: none;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 0.82rem;
+    font-family: inherit;
+    min-height: 42px;
+    min-width: 42px;
+    padding: 0 16px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .act:active { transform: scale(0.95); }
+  .act.call { background: var(--teal); color: #fff; }
+  .act.text { background: var(--teal-soft); color: var(--teal-dark); }
+  .act.copy { background: var(--paper); color: var(--muted); padding: 0; width: 42px; }
+  .act svg { width: 15px; height: 15px; }
+  .row-edit { display: none; gap: 6px; }
+  body.editing .row-edit { display: flex; }
+  .icon-btn {
+    border: none;
+    background: var(--paper);
+    border-radius: 10px;
+    width: 36px; height: 36px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .icon-btn.del { color: var(--coral); background: var(--coral-soft); }
+  .mini { width: 28px; height: 28px; font-size: 0.75rem; border-radius: 8px; }
+
+  /* ---------- Medical / pet profiles ---------- */
+  .person-card { position: relative; overflow: hidden; }
+  .person-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
+    background: var(--pc, var(--teal));
+  }
+  .person-card.hameed::before { background: var(--plum); }
+  .person-card.pet::before { background: var(--amber-mid); }
+  .p-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .p-name, .pet-name { font-weight: 700; font-size: 1.2rem; }
+  .p-sub { font-size: 0.8rem; color: var(--muted); font-weight: 700; }
+  .p-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .p-item { background: var(--paper); border-radius: 14px; padding: 10px 12px; }
+  .p-item .k { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 800; }
+  .p-item .v { font-size: 0.9rem; font-weight: 700; margin-top: 2px; white-space: pre-wrap; }
+  .p-item.warn { background: var(--coral-soft); }
+  .p-item.warn .k { color: var(--coral); }
+  .p-item.wide { grid-column: 1 / -1; }
+  .med-rows { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 8px; }
+  .k-row { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 800; margin-bottom: 4px; }
+  .med-line { padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: 0.92rem; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; font-weight: 600; }
+  .med-line:last-child { border-bottom: none; }
+  .med-line .dose { color: var(--muted); font-size: 0.84rem; text-align: right; flex-shrink: 0; }
+  .med-line .mnote { display: block; font-size: 0.76rem; color: var(--muted); font-weight: 600; }
+  .med-inline-edit { display: none; gap: 4px; margin-left: 8px; vertical-align: middle; }
+  body.editing .med-inline-edit { display: inline-flex; }
+  .add-inline {
+    display: none;
+    margin-top: 10px;
+    border: 1.5px dashed var(--teal-mid);
+    background: transparent;
+    color: var(--teal);
+    border-radius: 12px;
+    width: 100%;
+    padding: 10px;
+    font-weight: 800;
+    font-size: 0.82rem;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  body.editing .add-inline { display: block; }
+  .setup-profile {
+    border: 1.5px dashed var(--teal-mid);
+    background: transparent;
+    color: var(--teal);
+    border-radius: var(--r);
+    width: 100%;
+    padding: 20px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+    margin-bottom: 10px;
+  }
+  .share-pet {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: none;
+    background: var(--plum-soft);
+    color: var(--plum);
+    border-radius: 999px;
+    padding: 9px 16px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 12px;
+  }
+  .share-pet svg { width: 14px; height: 14px; }
+
+  /* ---------- Documents ---------- */
+  .docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .docs-grid.in-card { margin: 8px 0 0; }
+  .doc-tile {
+    background: var(--card);
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--shadow);
+  }
+  .in-card .doc-tile { background: var(--paper); box-shadow: none; }
+  .doc-tile img { width: 100%; height: 90px; object-fit: cover; display: block; }
+  .doc-tile .pdf-face {
+    height: 90px; display: flex; align-items: center; justify-content: center;
+    background: var(--amber-soft); color: var(--amber);
+    font-weight: 800; font-size: 0.85rem; letter-spacing: 0.08em;
+  }
+  .doc-tile .doc-label { font-size: 0.74rem; padding: 8px 10px 2px; font-weight: 800; word-break: break-word; }
+  .doc-tile .doc-tag { font-size: 0.64rem; color: var(--muted); padding: 0 10px 6px; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 800; }
+  .doc-foot { display: flex; gap: 6px; padding: 4px 8px 10px; }
+  .doc-foot button {
+    flex: 1;
+    border: none;
+    background: var(--teal-soft);
+    color: var(--teal-dark);
+    border-radius: 8px;
+    padding: 7px 0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .doc-foot button.view { background: var(--paper); color: var(--muted); }
+  .in-card .doc-foot button.view { background: #fff; }
+  .doc-manage { display: none; gap: 6px; padding: 0 8px 10px; }
+  body.editing .doc-manage { display: flex; }
+  .doc-manage button {
+    flex: 1;
+    border: none;
+    background: var(--paper);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 7px 0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .in-card .doc-manage button { background: #fff; }
+  .doc-manage button.d { background: var(--coral-soft); color: var(--coral); }
+
+  /* ---------- Fullscreen viewer ---------- */
+  .viewer {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(20,14,18,0.96);
+    z-index: 50;
+    flex-direction: column;
+  }
+  .viewer.open { display: flex; }
+  .viewer-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    gap: 8px;
+  }
+  .viewer-bar .vb-group { display: flex; gap: 8px; }
+  .viewer-bar button {
+    border: none;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .viewer-bar button.primary { background: var(--teal); }
+  .viewer-body {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    overflow: auto;
+    padding: 0 8px 20px;
+  }
+  .viewer-body img { max-width: 100%; max-height: 100%; border-radius: 8px; }
+  .viewer-body iframe { border: 0; width: 100%; height: 100%; background: #fff; border-radius: 8px; }
+
+  .upload-tile {
+    border: 1.5px dashed var(--teal-mid);
+    border-radius: 18px;
+    min-height: 128px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    color: var(--muted); font-size: 0.76rem; font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    background: transparent;
+  }
+  .upload-tile .plus { font-size: 1.5rem; color: var(--teal); line-height: 1; }
+  .upload-tile:active { background: var(--teal-soft); }
+  .notes-box {
+    width: 100%;
+    border: none;
+    border-radius: 16px;
+    background: var(--card);
+    padding: 14px 16px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: var(--ink);
+    min-height: 80px;
+    resize: vertical;
+    box-shadow: var(--shadow);
+  }
+  .notes-box:focus { outline: 2px solid var(--teal-mid); }
+  .notes-k { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 800; margin: 6px 0 6px 4px; }
+  .storage-note { font-size: 0.72rem; color: var(--muted); margin-top: 16px; font-weight: 600; }
+
+  /* ---------- Modal ---------- */
+  .modal-bg {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(69,55,65,0.45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 30;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: 26px 26px 0 0;
+    padding: 24px 20px 34px;
+    width: 100%;
+    max-width: 680px;
+    max-height: 88vh;
+    overflow-y: auto;
+    animation: rise 0.22s ease;
+  }
+  .modal h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; }
+  .modal .m-section {
+    font-size: 0.72rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--teal);
+    margin: 20px 0 2px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--teal-soft);
+  }
+  .modal label { display: block; font-size: 0.74rem; font-weight: 800; color: var(--muted); margin: 12px 0 5px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .modal input, .modal textarea {
+    width: 100%;
+    border: none;
+    border-radius: 13px;
+    padding: 13px 14px;
+    font-size: 16px;
+    font-family: inherit;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .modal input:focus, .modal textarea:focus { outline: 2px solid var(--teal-mid); }
+  .modal textarea { resize: vertical; min-height: 58px; }
+  .modal .btns { display: flex; gap: 10px; margin-top: 22px; }
+  .modal .btns button {
+    flex: 1; border: none; border-radius: 999px; padding: 15px;
+    font-size: 0.95rem; font-weight: 800; font-family: inherit; cursor: pointer;
+  }
+  .save { background: var(--teal); color: #fff; }
+  .cancel { background: var(--paper); color: var(--muted); }
+
+  .empty { color: var(--muted); font-size: 0.85rem; padding: 6px 4px; font-weight: 600; }
+  input[type="file"] { display: none; }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--plum-deep); color: #fff;
+    border-radius: 999px; padding: 11px 22px;
+    font-size: 0.85rem; font-weight: 800;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    z-index: 40;
+    box-shadow: var(--shadow-lift);
+  }
+  .toast.show { opacity: 1; }
+
+  .sync-pill.offline { background: rgba(252,188,102,0.3); color: #ffe1b3; }
+
+  .cover-btn.c-responder { grid-column: 1 / -1; }
+  .cover-btn.c-responder .ico { background: var(--coral-soft); color: var(--coral); }
+
+  .backup-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .backup-row button {
+    flex: 1;
+    min-width: 44%;
+    border: none;
+    background: transparent;
+    border: 1.5px dashed var(--line);
+    color: var(--muted);
+    border-radius: 14px;
+    padding: 13px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .backup-row button:active { background: var(--plum-soft); }
+
+  .lock-responder {
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.85);
+    border-radius: 999px;
+    padding: 11px 22px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    font-family: "Nunito Sans", sans-serif;
+    cursor: pointer;
+  }
+  .lock-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: var(--paper);
+    z-index: 120;
+    overflow-y: auto;
+    padding: 18px 16px 40px;
+  }
+  .lock-overlay.open { display: block; }
+  .lock-overlay .lo-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; max-width: 680px; margin-left: auto; margin-right: auto; }
+  .lock-overlay .lo-head h2 { font-family: "Fraunces", Georgia, serif; font-size: 1.3rem; color: var(--ink); }
+  .lock-overlay .lo-close {
+    border: none; background: var(--card); color: var(--muted);
+    border-radius: 999px; padding: 9px 18px;
+    font-weight: 800; font-family: inherit; font-size: 0.85rem; cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .lock-overlay .lo-body { max-width: 680px; margin: 0 auto; }
+
+  .update-banner {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--teal); color: #fff;
+    padding: 15px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 0.88rem;
+    cursor: pointer;
+    z-index: 60;
+    box-shadow: 0 -4px 16px rgba(88,64,83,0.2);
+  }
+  .update-banner.show { display: block; }
+
+  #printSheet { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    #printSheet, #printSheet * { visibility: visible; }
+    #printSheet {
+      display: block;
+      position: absolute; left: 0; top: 0; width: 100%;
+      color: #000;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 11pt;
+      line-height: 1.4;
+      padding: 0.15in;
+    }
+    #printSheet h1 { font-size: 16pt; margin-bottom: 2pt; }
+    #printSheet h2 { font-size: 13pt; margin: 10pt 0 3pt; border-bottom: 1.5px solid #000; padding-bottom: 2pt; }
+    #printSheet h3 { font-size: 11.5pt; margin: 7pt 0 2pt; }
+    #printSheet .pr-line { margin: 2pt 0; }
+    #printSheet .pr-date { font-size: 9pt; color: #444; margin-bottom: 6pt; }
+  }
+
+  /* ---------- PIN lock ---------- */
+  .lock {
+    position: fixed; inset: 0;
+    background: linear-gradient(160deg, var(--plum) 0%, var(--plum-deep) 100%);
+    z-index: 100;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 26px;
+    padding: 24px;
+  }
+  .lock.hidden { display: none; }
+  .lock h2 {
+    font-family: "Fraunces", Georgia, serif;
+    color: #fff; font-size: 1.5rem; font-weight: 700;
+    text-align: center;
+  }
+  .lock h2 em { font-style: normal; color: var(--teal-mid); }
+  .lock .lock-sub { color: rgba(255,255,255,0.6); font-size: 0.85rem; font-weight: 700; margin-top: -16px; }
+  .pin-dots { display: flex; gap: 16px; }
+  .pin-dots span {
+    width: 15px; height: 15px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.45);
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .pin-dots span.filled { background: var(--teal-mid); border-color: var(--teal-mid); }
+  .pin-dots.shake { animation: shake 0.35s ease; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-9px); }
+    50% { transform: translateX(9px); }
+    75% { transform: translateX(-5px); }
+  }
+  .pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .pin-pad button {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-family: "Nunito Sans", sans-serif;
+    cursor: pointer;
+    transition: background 0.1s, transform 0.1s;
+  }
+  .pin-pad button:active { background: rgba(255,255,255,0.28); transform: scale(0.94); }
+  .pin-pad button.ghost { background: transparent; font-size: 1.1rem; }
+</style>
+</head>
+<body>
+
+<div class="lock" id="lockScreen">
+  <h2>Emergency <em>Hub</em></h2>
+  <div class="lock-sub">Enter code</div>
+  <div class="pin-dots" id="pinDots"><span></span><span></span><span></span><span></span></div>
+  <div class="pin-pad">
+    <button onclick="pinDigit('1')">1</button>
+    <button onclick="pinDigit('2')">2</button>
+    <button onclick="pinDigit('3')">3</button>
+    <button onclick="pinDigit('4')">4</button>
+    <button onclick="pinDigit('5')">5</button>
+    <button onclick="pinDigit('6')">6</button>
+    <button onclick="pinDigit('7')">7</button>
+    <button onclick="pinDigit('8')">8</button>
+    <button onclick="pinDigit('9')">9</button>
+    <button class="ghost"></button>
+    <button onclick="pinDigit('0')">0</button>
+    <button class="ghost" onclick="pinBack()">&#9003;</button>
+  </div>
+  <button class="lock-responder" id="bioBtn" style="display:none;" onclick="bioUnlock()">&#128274; Unlock with Face ID</button>
+  <button class="lock-responder" onclick="openLockResponder()">&#10010; First responder info</button>
+</div>
+
+<div class="lock-overlay" id="lockResponder">
+  <div class="lo-head">
+    <h2>First Responder Info</h2>
+    <button class="lo-close" onclick="document.getElementById('lockResponder').classList.remove('open')">Close</button>
+  </div>
+  <div class="lo-body" id="lockResponderBody"></div>
+</div>
+
+<div class="top">
+  <div class="wrap">
+    <div class="top-left">
+      <button class="back-btn" onclick="showPage('home')">&#8592;</button>
+      <h1 id="pageTitle">Emergency <em>Hub</em></h1>
+      <span class="sync-pill" id="syncPill" onclick="explainSync()" style="cursor:pointer;">Local</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="edit-toggle" onclick="lockNow()" aria-label="Lock" style="padding:8px 13px;">&#128274;</button>
+      <button class="edit-toggle" id="editToggle" onclick="toggleEdit()">Edit</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- COVER -->
+  <div class="page active" id="page-home">
+    <div class="cover-grid">
+      <button class="cover-btn c-contacts" onclick="showPage('contacts')">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"/></svg></div>
+        <div class="t">Contacts</div>
+        <div class="s">People &amp; work numbers</div>
+      </button>
+      <button class="cover-btn c-medical" onclick="showPage('medical')">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 3h4a1 1 0 0 1 1 1v5h5a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-5v5a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-5H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h5V4a1 1 0 0 1 1-1z"/></svg></div>
+        <div class="t">Medical</div>
+        <div class="s">Allergies, meds &amp; doctors</div>
+      </button>
+      <button class="cover-btn c-docs" onclick="showPage('docs')">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm0 2.5L17.5 8H14V4.5zM8 12h8v2H8v-2zm0 4h8v2H8v-2z"/></svg></div>
+        <div class="t">Documents</div>
+        <div class="s">Insurance cards &amp; IDs</div>
+      </button>
+      <button class="cover-btn c-pets" onclick="showPage('pets')">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="10" r="2.2"/><circle cx="9.2" cy="5.8" r="2.4"/><circle cx="14.8" cy="5.8" r="2.4"/><circle cx="19" cy="10" r="2.2"/><path d="M12 10c-2.6 0-5.6 3-5.6 5.6 0 1.9 1.4 3 3.1 3 .9 0 1.7-.5 2.5-.5s1.6.5 2.5.5c1.7 0 3.1-1.1 3.1-3C17.6 13 14.6 10 12 10z"/></svg></div>
+        <div class="t">Pets</div>
+        <div class="s">Vets, vaccines &amp; records</div>
+      </button>
+      <button class="cover-btn c-responder" onclick="showPage('responder')">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 3 7v2h18V7l-9-5zm-7 9v8H3v2h18v-2h-2v-8h-3v8h-3v-8h-2v8H8v-8H5z"/></svg></div>
+        <div class="t">First Responder</div>
+        <div class="s">Address &amp; emergency contacts</div>
+      </button>
+    </div>
+    <div class="backup-row">
+      <button onclick="exportBackup()">&#8681; Export backup</button>
+      <button onclick="document.getElementById('backupInput').click()">&#8682; Restore backup</button>
+      <button onclick="printSheet()">&#128424;&#65039; Print sheet</button>
+      <button id="bioSetupBtn" style="display:none;" onclick="setupBio()">&#128274; Set up Face ID unlock</button>
+    </div>
+  </div>
+
+  <!-- CONTACTS -->
+  <div class="page" id="page-contacts">
+    <input class="search" id="searchBox" placeholder="Search contacts…" oninput="renderContacts()">
+
+    <div class="owner-band">
+      <span class="owner-chip em">Em</span>
+      <span class="rule"></span>
+      <button class="add-btn" onclick="openContactForm('Em')">+ Add</button>
+    </div>
+    <div id="contacts-Em"></div>
+
+    <div class="owner-band">
+      <span class="owner-chip hameed">Hameed</span>
+      <span class="rule"></span>
+      <button class="add-btn" onclick="openContactForm('Hameed')">+ Add</button>
+    </div>
+    <div id="contacts-Hameed"></div>
+  </div>
+
+  <!-- MEDICAL -->
+  <div class="page" id="page-medical">
+    <div class="owner-band">
+      <span class="owner-chip em">Em</span>
+      <span class="rule"></span>
+    </div>
+    <div id="medical-Em"></div>
+    <div class="sub-band">
+      <h2>Em's Doctors</h2>
+      <button class="add-btn" onclick="openDoctorForm('Em')">+ Add doctor</button>
+    </div>
+    <div id="doctors-Em"></div>
+
+    <div class="owner-band">
+      <span class="owner-chip hameed">Hameed</span>
+      <span class="rule"></span>
+    </div>
+    <div id="medical-Hameed"></div>
+    <div class="sub-band">
+      <h2>Hameed's Doctors</h2>
+      <button class="add-btn" onclick="openDoctorForm('Hameed')">+ Add doctor</button>
+    </div>
+    <div id="doctors-Hameed"></div>
+  </div>
+
+  <!-- DOCUMENTS -->
+  <div class="page" id="page-docs">
+    <div class="owner-band">
+      <span class="owner-chip em">Em</span>
+      <span class="rule"></span>
+    </div>
+    <div class="docs-grid" id="docs-Em"></div>
+    <div class="notes-k">Em — policy numbers &amp; notes</div>
+    <textarea class="notes-box" id="notes-Em" placeholder="Policy numbers, member IDs, group numbers…" onchange="saveNotes('Em')"></textarea>
+
+    <div class="owner-band">
+      <span class="owner-chip hameed">Hameed</span>
+      <span class="rule"></span>
+    </div>
+    <div class="docs-grid" id="docs-Hameed"></div>
+    <div class="notes-k">Hameed — policy numbers &amp; notes</div>
+    <textarea class="notes-box" id="notes-Hameed" placeholder="Policy numbers, member IDs, group numbers…" onchange="saveNotes('Hameed')"></textarea>
+
+    <div class="storage-note">Saved on this device in this browser. Screenshots of cards upload fastest. Add them once on each phone.</div>
+  </div>
+
+  <!-- PETS -->
+  <div class="page" id="page-pets">
+    <div class="owner-band">
+      <span class="owner-chip pets">Vet Contacts</span>
+      <span class="rule"></span>
+      <button class="add-btn" onclick="openContactForm('Vets')">+ Add</button>
+    </div>
+    <div id="contacts-Vets"></div>
+
+    <div class="owner-band">
+      <span class="owner-chip pets">Pets</span>
+      <span class="rule"></span>
+      <button class="add-btn" onclick="openPetForm()">+ Add pet</button>
+    </div>
+    <div id="pets-list"></div>
+    <div class="storage-note">Vaccine records and photos are saved on this device. Use the Share button on any record to send it by text or email.</div>
+  </div>
+
+  <!-- FIRST RESPONDER -->
+  <div class="page" id="page-responder">
+    <div class="owner-band">
+      <span class="owner-chip em" style="background:var(--coral-soft);color:var(--coral);">If Emergency Crews Arrive</span>
+      <span class="rule"></span>
+    </div>
+    <div id="responder-card"></div>
+    <div class="storage-note">This card is also viewable from the code screen without entering the code - keep anything you wouldn't hand a stranger (like door codes) out of it, or ask to turn that off.</div>
+  </div>
+
+</div>
+
+<input type="file" id="fileInput" accept="image/*,application/pdf" onchange="handleFile(event)">
+<input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFile(event)">
+<input type="file" id="backupInput" accept=".json,application/json" onchange="importBackup(event)">
+
+<!-- Contact form -->
+<div class="modal-bg" id="formModal">
+  <div class="modal">
+    <h3 id="formTitle">Add contact</h3>
+    <label>Name</label>
+    <input id="f-name" placeholder="e.g. Mom, Boss, Clinic name">
+    <label>Relationship / role</label>
+    <input id="f-rel" placeholder="e.g. Mother, Charge nurse, Emergency vet">
+    <label>Phone</label>
+    <input id="f-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="e.g. 865-555-0123">
+    <label>Phone label (optional)</label>
+    <input id="f-phone-label" placeholder="e.g. Cell, Main line, After hours">
+    <label>Notes (optional)</label>
+    <textarea id="f-notes" placeholder="Address, hours, account #…"></textarea>
+    <div class="btns">
+      <button class="cancel" onclick="closeModal('formModal')">Cancel</button>
+      <button class="save" onclick="saveContact()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Doctor form -->
+<div class="modal-bg" id="doctorModal">
+  <div class="modal">
+    <h3 id="doctorTitle">Add doctor</h3>
+    <div class="m-section">Doctor details</div>
+    <label>Name</label>
+    <input id="dr-name" placeholder="e.g. Dr. Patel">
+    <label>Specialty / role</label>
+    <input id="dr-spec" placeholder="e.g. Primary care, Cardiologist, Dentist">
+    <div class="m-section">Contact information</div>
+    <label>Office phone</label>
+    <input id="dr-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="e.g. 865-555-0123">
+    <label>Practice / location (optional)</label>
+    <input id="dr-office" placeholder="e.g. Covenant Medical Group, Powell">
+    <label>Notes (optional)</label>
+    <textarea id="dr-notes" placeholder="Portal login hint, referral needed, preferred pharmacy…"></textarea>
+    <div class="btns">
+      <button class="cancel" onclick="closeModal('doctorModal')">Cancel</button>
+      <button class="save" onclick="saveDoctor()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Profile form (Em / Hameed) -->
+<div class="modal-bg" id="profileModal">
+  <div class="modal">
+    <h3 id="profileTitle">Edit profile</h3>
+    <label>Date of birth (optional)</label>
+    <input id="p-dob" inputmode="numeric" placeholder="MM/DD/YYYY">
+    <label>Blood type (optional)</label>
+    <input id="p-blood" placeholder="e.g. O+">
+    <label>Allergies</label>
+    <textarea id="p-allergies" placeholder="e.g. Penicillin — hives. Write None if none."></textarea>
+    <label>Conditions (optional)</label>
+    <textarea id="p-conditions" placeholder="e.g. Hypertension, asthma"></textarea>
+    <label>Other notes (optional)</label>
+    <textarea id="p-notes" placeholder="e.g. Preferred hospital"></textarea>
+    <div class="btns">
+      <button class="cancel" onclick="closeModal('profileModal')">Cancel</button>
+      <button class="save" onclick="saveProfile()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pet form -->
+<div class="modal-bg" id="petModal">
+  <div class="modal">
+    <h3 id="petTitle">Add pet</h3>
+    <label>Name</label>
+    <input id="pet-name" placeholder="e.g. Bia">
+    <label>Species / breed</label>
+    <input id="pet-breed" placeholder="e.g. Beagle">
+    <label>Date of birth (optional)</label>
+    <input id="pet-dob" inputmode="numeric" placeholder="MM/DD/YYYY (use 01/01 if only the year is known)">
+    <label>Microchip # (optional)</label>
+    <input id="pet-chip" inputmode="numeric" placeholder="e.g. 985112004567890">
+    <label>Allergies</label>
+    <textarea id="pet-allergies" placeholder="e.g. Chicken. Write None if none."></textarea>
+    <label>Conditions (optional)</label>
+    <textarea id="pet-conditions" placeholder="e.g. Seasonal skin allergies"></textarea>
+    <label>Other notes (optional)</label>
+    <textarea id="pet-notes" placeholder="e.g. Food brand, boarding info, escapes fences"></textarea>
+    <div class="btns">
+      <button class="cancel" onclick="closeModal('petModal')">Cancel</button>
+      <button class="save" onclick="savePet()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Med form -->
+<div class="modal-bg" id="medModal">
+  <div class="modal">
+    <h3 id="medTitle">Add medication</h3>
+    <label>Medication</label>
+    <input id="m-name" placeholder="e.g. Lisinopril">
+    <label>Dose / schedule</label>
+    <input id="m-dose" placeholder="e.g. 10 mg daily, AM">
+    <label>Notes (optional)</label>
+    <input id="m-notes" placeholder="e.g. take with food, refill at CVS">
+    <div class="btns">
+      <button class="cancel" onclick="closeModal('medModal')">Cancel</button>
+      <button class="save" onclick="saveMed()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Doc rename form -->
+<div class="modal-bg" id="docModal">
+  <div class="modal">
+    <h3>Rename document</h3>
+    <label>Name</label>
+    <input id="d-name" placeholder="e.g. BCBS card — front">
+    <label>Tag (optional)</label>
+    <input id="d-tag" placeholder="e.g. Health, Dental, Rabies 2026">
+    <div class="btns">
+      <button class="cancel" onclick="closeModal('docModal')">Cancel</button>
+      <button class="save" onclick="saveDocMeta()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Responder form -->
+<div class="modal-bg" id="responderModal">
+  <div class="modal">
+    <h3>First responder card</h3>
+    <label>Home address</label>
+    <textarea id="r-address" placeholder="Street address, city - what you'd tell a 911 dispatcher"></textarea>
+    <label>Household</label>
+    <textarea id="r-house" placeholder="e.g. 2 adults. Beagle named Bia - friendly but loud, do not let her out"></textarea>
+    <div class="m-section">Emergency contacts</div>
+    <label>Contact 1 - name</label>
+    <input id="r-ice1n" placeholder="e.g. Em's daughter">
+    <label>Contact 1 - phone</label>
+    <input id="r-ice1p" type="tel" inputmode="tel" placeholder="e.g. 865-555-0123">
+    <label>Contact 2 - name (optional)</label>
+    <input id="r-ice2n" placeholder="">
+    <label>Contact 2 - phone (optional)</label>
+    <input id="r-ice2p" type="tel" inputmode="tel" placeholder="">
+    <div class="btns">
+      <button class="cancel" onclick="closeModal('responderModal')">Cancel</button>
+      <button class="save" onclick="saveResponder()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Upload chooser -->
+<div class="modal-bg" id="uploadChoice">
+  <div class="modal">
+    <h3>Add document</h3>
+    <div class="btns" style="flex-direction:column;margin-top:14px;">
+      <button class="save" onclick="closeModal('uploadChoice');document.getElementById('cameraInput').click()">&#128247; Take a photo</button>
+      <button class="cancel" onclick="closeModal('uploadChoice');document.getElementById('fileInput').click()">Choose from library / files</button>
+    </div>
+  </div>
+</div>
+
+<div class="viewer" id="viewer">
+  <div class="viewer-bar">
+    <button onclick="closeViewer()">&#10005; Close</button>
+    <div class="vb-group">
+      <button onclick="downloadCurrentDoc()">Save</button>
+      <button class="primary" onclick="shareCurrentDoc()">Share</button>
+    </div>
+  </div>
+  <div class="viewer-body" id="viewerBody"></div>
+</div>
+
+<div class="update-banner" id="updateBanner" onclick="location.reload()">A new version is ready &mdash; tap to update</div>
+<div id="printSheet"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   FIREBASE SYNC SETUP
+   1. Paste your config from the Firebase console:
+      Project settings -> General -> Your apps -> SDK setup and config
+   2. Set HOUSEHOLD_ID to a random phrase only you and Hameed know
+      (it acts like a shared key for your data - make it unguessable).
+   Leave the placeholders as-is to run in local-only mode
+   (everything saves to this device's browser instead).
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyCjTtCmdY57CaFolPP7OwzlzCkqtDZu6Zo",
+  authDomain: "emergency-hub-b19b2.firebaseapp.com",
+  projectId: "emergency-hub-b19b2",
+  storageBucket: "emergency-hub-b19b2.firebasestorage.app",
+  messagingSenderId: "274616015312",
+  appId: "1:274616015312:web:c643ed312dea18cc0201d5"
+};
+const HID_BASE = "plum-beagle-7734-tn";
+const PIN_SALT = "ehub-plum-2026";
+const PIN_HASH = "51d13a5baf7779932fc41cdddfab18108529de57ef1209776a6309271cd950fa";
+let HOUSEHOLD_ID = null; // derived from the PIN on unlock
+
+// ---------- local cache (used alone in local mode, as offline cache in sync mode) ----------
+const mem = {};
+const store = {
+  get(k, fallback) {
+    try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; }
+    catch(e) { return mem[k] !== undefined ? mem[k] : fallback; }
+  },
+  set(k, v) {
+    try { localStorage.setItem(k, JSON.stringify(v)); mem[k] = v; }
+    catch(e) {
+      mem[k] = v;
+      if (e && (e.name === 'QuotaExceededError' || e.code === 22)) alert('Local storage is full - remove an old document or use a smaller photo.');
+    }
+  }
+};
+
+const PEOPLE = ['Em', 'Hameed'];
+const CORE_KEYS = ['contacts', 'doctors', 'profiles', 'meds', 'pets', 'notes', 'responder'];
+
+let data = {
+  contacts: store.get('eh5_contacts', []),   // {owner:'Em'|'Hameed'|'Vets', name, rel, phone, phoneLabel, notes}
+  doctors: store.get('eh5_doctors', []),     // {owner, name, spec, phone, office, notes}
+  profiles: store.get('eh5_profiles', {}),   // {Em:{}, Hameed:{}}
+  meds: store.get('eh5_meds', []),           // {owner: 'Em'|'Hameed'|petId, name, dose, notes}
+  pets: store.get('eh5_pets', []),           // {id, name, breed, dob, chip, allergies, conditions, notes}
+  notes: store.get('eh5_notes', { Em: '', Hameed: '' }),
+  docs: store.get('eh5_docs', []),           // {id, kind:'doc', owner, name, tag, type, data, createdAt}
+  petdocs: store.get('eh5_petdocs', []),     // {id, kind:'petdoc', petId, name, tag, type, data, createdAt}
+  responder: store.get('eh5_responder', {}), // {address, house, ice1n, ice1p, ice2n, ice2p}
+};
+
+// Ensure every stored file has an id (older saves)
+[...data.docs, ...data.petdocs].forEach(f => { if (!f.id) f.id = 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7); });
+
+// Seed Bia on first run
+if (!store.get('eh5_init', false)) {
+  if (!data.pets.length) {
+    data.pets.push({ id: 'pet_' + Date.now(), name: 'Bia', breed: 'Beagle', dob: '', chip: '', allergies: '', conditions: '', notes: '' });
+    store.set('eh5_pets', data.pets);
+  }
+  store.set('eh5_init', true);
+}
+
+const LOCAL_KEYS = { contacts:'eh5_contacts', doctors:'eh5_doctors', profiles:'eh5_profiles', meds:'eh5_meds', pets:'eh5_pets', notes:'eh5_notes', docs:'eh5_docs', petdocs:'eh5_petdocs', responder:'eh5_responder' };
+function cacheLocal(key) { store.set(LOCAL_KEYS[key], data[key]); }
+
+// ---------- Firebase ----------
+let fb = null;
+
+let lastSyncError = null;
+function setSync(state, err) {
+  const pill = document.getElementById('syncPill');
+  if (!pill) return;
+  if (err) lastSyncError = err;
+  pill.classList.remove('synced', 'error', 'offline');
+  if (state === 'error' && !navigator.onLine) state = 'offline';
+  if (state === 'synced') { pill.textContent = 'Synced'; pill.classList.add('synced'); }
+  else if (state === 'error') { pill.textContent = 'Sync error'; pill.classList.add('error'); }
+  else if (state === 'offline') { pill.textContent = 'Offline'; pill.classList.add('offline'); }
+  else { pill.textContent = 'Local'; }
+}
+function explainSync() {
+  if (!lastSyncError) { alert('No sync problem recorded. Pill: ' + document.getElementById('syncPill').textContent); return; }
+  const code = lastSyncError.code || '';
+  let hint = '';
+  if (code.indexOf('permission-denied') !== -1) hint = '\n\nLikely fix: enable Anonymous sign-in (Authentication -> Sign-in method) and confirm the rules are published.';
+  else if (code.indexOf('not-found') !== -1 || code.indexOf('failed-precondition') !== -1) hint = '\n\nLikely fix: the Firestore database has not been created yet (Build -> Firestore Database -> Create database).';
+  else if (code.indexOf('unavailable') !== -1) hint = '\n\nLikely a network issue - check the connection and reload.';
+  alert('Firebase says:\n' + (lastSyncError.code || '') + '\n' + (lastSyncError.message || lastSyncError) + hint);
+}
+
+function configLooksReal() {
+  return firebaseConfig.projectId && firebaseConfig.projectId.indexOf('PASTE') !== 0 &&
+         firebaseConfig.apiKey && firebaseConfig.apiKey.indexOf('PASTE') !== 0;
+}
+
+async function initFirebase() {
+  if (fb) return; // already connected (e.g. re-unlock after using the lock button)
+  if (!configLooksReal()) { setSync('local'); return; }
+  try {
+    const appM = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+    const fsM = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+    const app = appM.initializeApp(firebaseConfig);
+    let db;
+    try { db = fsM.initializeFirestore(app, { localCache: fsM.persistentLocalCache() }); }
+    catch (e) { db = fsM.getFirestore(app); }
+    // Anonymous sign-in (enable it in Firebase console -> Authentication).
+    // If it's not enabled, we continue anyway - test-mode rules will still allow access.
+    try {
+      const auM = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+      await auM.signInAnonymously(auM.getAuth(app));
+    } catch (e) { console.warn('Anonymous auth unavailable:', e && e.code); setSync('error', e); }
+
+    fb = {
+      db,
+      doc: fsM.doc, setDoc: fsM.setDoc, deleteDoc: fsM.deleteDoc,
+      collection: fsM.collection, onSnapshot: fsM.onSnapshot
+    };
+    fb.coreRef = fb.doc(db, 'hubs', HOUSEHOLD_ID);
+    fb.fileRef = id => fb.doc(db, 'hubs', HOUSEHOLD_ID, 'files', id);
+    fb.filesCol = fb.collection(db, 'hubs', HOUSEHOLD_ID, 'files');
+
+    fb.onSnapshot(fb.coreRef, snap => {
+      if (!snap.exists()) {
+        bootstrapUpload();
+      } else {
+        const d = snap.data() || {};
+        CORE_KEYS.forEach(k => { if (d[k] !== undefined) { data[k] = d[k]; cacheLocal(k); } });
+        renderAll();
+      }
+      setSync('synced');
+    }, err => { console.error(err); setSync('error', err); });
+
+    fb.onSnapshot(fb.filesCol, snap => {
+      const docs = [], petdocs = [];
+      snap.forEach(s => {
+        const f = s.data();
+        (f.kind === 'petdoc' ? petdocs : docs).push(f);
+      });
+      const byTime = (a, b) => (a.createdAt || 0) - (b.createdAt || 0);
+      data.docs = docs.sort(byTime);
+      data.petdocs = petdocs.sort(byTime);
+      cacheLocal('docs'); cacheLocal('petdocs');
+      renderDocs(); renderPets();
+      setSync('synced');
+    }, err => { console.error(err); setSync('error', err); });
+  } catch (e) {
+    console.error('Firebase init failed:', e);
+    setSync('error', e);
+  }
+}
+
+// First device to connect pushes its local data up
+function bootstrapUpload() {
+  const payload = {};
+  CORE_KEYS.forEach(k => payload[k] = data[k]);
+  fb.setDoc(fb.coreRef, payload, { merge: true }).catch(err => { console.error(err); setSync('error', err); });
+  [...data.docs, ...data.petdocs].forEach(f => {
+    fb.setDoc(fb.fileRef(f.id), f).catch(err => { console.error(err); setSync('error', err); });
+  });
+}
+
+function persist(key) {
+  cacheLocal(key);
+  if (fb && CORE_KEYS.indexOf(key) !== -1) {
+    fb.setDoc(fb.coreRef, { [key]: data[key] }, { merge: true }).catch(err => { console.error(err); setSync('error', err); });
+  }
+}
+
+let editing = false;
+let contactIndex = -1, contactOwner = null;
+let doctorIndex = -1, doctorOwner = null;
+let profileOwner = null;
+let petIndex = -1;
+let medIndex = -1, medOwner = null;
+let docIndex = -1, docCollection = 'docs', uploadTarget = null;
+
+// ---------- helpers ----------
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function jsq(s) { return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+function telHref(num) { return 'tel:' + String(num).replace(/[^\d+]/g, ''); }
+function smsHref(num) { return 'sms:' + String(num).replace(/[^\d+]/g, ''); }
+function initials(name) { return (name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0].toUpperCase()).join(''); }
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('show'), 1800);
+}
+function copyNum(num) {
+  const doFallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = num; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('Copied'); } catch (e) { toast('Could not copy'); }
+    document.body.removeChild(ta);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(num).then(() => toast('Copied')).catch(doFallback);
+  } else doFallback();
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function dial(url) {
+  try { window.top.location.href = url; return; } catch (e) {}
+  try { const w = window.open(url, '_top'); if (w !== null) return; } catch (e) {}
+  try { const w = window.open(url, '_blank'); if (w !== null) return; } catch (e) {}
+  window.location.href = url;
+}
+
+const PHONE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"/></svg>';
+const MSG_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>';
+const COPY_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+const SHARE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.1c-.8 0-1.5.3-2 .8l-7.1-4.2c.1-.2.1-.5.1-.7s0-.5-.1-.7L16 7.2c.5.5 1.2.8 2 .8 1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3c0 .2 0 .5.1.7L8 9.8C7.5 9.3 6.8 9 6 9c-1.7 0-3 1.3-3 3s1.3 3 3 3c.8 0 1.5-.3 2-.8l7.1 4.2c-.1.2-.1.4-.1.6 0 1.6 1.3 2.9 3 2.9s3-1.3 3-2.9-1.3-2.9-3-2.9z"/></svg>';
+
+// ---------- pages ----------
+const PAGE_TITLES = {
+  home: 'Emergency <em>Hub</em>',
+  contacts: 'Contacts',
+  medical: 'Medical',
+  docs: 'Documents',
+  pets: 'Pets',
+  responder: 'First Responder'
+};
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('pageTitle').innerHTML = PAGE_TITLES[name];
+  document.body.classList.toggle('subpage', name !== 'home');
+  window.scrollTo(0, 0);
+}
+
+// ---------- edit mode ----------
+function toggleEdit() {
+  editing = !editing;
+  document.body.classList.toggle('editing', editing);
+  const btn = document.getElementById('editToggle');
+  btn.textContent = editing ? 'Done' : 'Edit';
+  btn.classList.toggle('on', editing);
+}
+
+// ---------- shared rows ----------
+function numRow(num, label) {
+  const t = telHref(num), s = smsHref(num);
+  return '<div class="num-row">' +
+    '<span class="num-label">' + esc(num) + (label ? '<small>' + esc(label) + '</small>' : '') + '</span>' +
+    '<a class="act call" href="' + t + '" target="_top" onclick="dial(\'' + t + '\');return false;">' + PHONE_SVG + 'Call</a>' +
+    '<a class="act text" href="' + s + '" target="_top" onclick="dial(\'' + s + '\');return false;">' + MSG_SVG + '</a>' +
+    '<button class="act copy" onclick="copyNum(\'' + jsq(num) + '\')">' + COPY_SVG + '</button>' +
+    '</div>';
+}
+
+// ---------- contacts ----------
+function matchesSearch(c, q) {
+  if (!q) return true;
+  return [c.name, c.rel, c.phone, c.notes].join(' ').toLowerCase().includes(q);
+}
+function renderContacts() {
+  const qEl = document.getElementById('searchBox');
+  const q = qEl ? qEl.value.trim().toLowerCase() : '';
+  ['Em', 'Hameed', 'Vets'].forEach(owner => {
+    const el = document.getElementById('contacts-' + owner);
+    if (!el) return;
+    const useQ = owner === 'Vets' ? '' : q;
+    const items = data.contacts
+      .map((c, i) => ({ c, i }))
+      .filter(x => x.c.owner === owner && matchesSearch(x.c, useQ));
+    if (!items.length) {
+      const hints = {
+        Em: q ? 'No matches.' : 'No contacts yet - tap Edit, then + Add. Family, boss, unit desk line.',
+        Hameed: q ? 'No matches.' : 'No contacts yet - tap Edit, then + Add.',
+        Vets: 'Add the regular clinic and an emergency/after-hours vet.'
+      };
+      el.innerHTML = '<div class="empty">' + hints[owner] + '</div>';
+      return;
+    }
+    el.innerHTML = items.map(({ c, i }) =>
+      '<div class="card">' +
+      '<div class="c-top">' +
+      '<div class="avatar">' + esc(initials(c.name)) + '</div>' +
+      '<div class="c-info"><div class="c-name">' + esc(c.name) + '</div><div class="c-rel">' + esc(c.rel) + '</div></div>' +
+      '<div class="row-edit">' +
+      '<button class="icon-btn" onclick="openContactForm(\'' + jsq(c.owner) + '\',' + i + ')">&#9998;</button>' +
+      '<button class="icon-btn del" onclick="delContact(' + i + ')">&#10005;</button>' +
+      '</div></div>' +
+      '<div class="c-actions">' + numRow(c.phone, c.phoneLabel) + '</div>' +
+      (c.notes ? '<div class="c-notes">' + esc(c.notes) + '</div>' : '') +
+      '</div>'
+    ).join('');
+  });
+}
+function openContactForm(owner, index = -1) {
+  contactOwner = owner; contactIndex = index;
+  const c = index >= 0 ? data.contacts[index] : { name: '', rel: '', phone: '', phoneLabel: '', notes: '' };
+  const who = owner === 'Vets' ? 'Vet' : owner;
+  document.getElementById('formTitle').textContent = (index >= 0 ? 'Edit' : 'Add') + ' contact - ' + who;
+  document.getElementById('f-name').value = c.name;
+  document.getElementById('f-rel').value = c.rel;
+  document.getElementById('f-phone').value = c.phone;
+  document.getElementById('f-phone-label').value = c.phoneLabel || '';
+  document.getElementById('f-notes').value = c.notes || '';
+  openModal('formModal');
+}
+function saveContact() {
+  const entry = {
+    owner: contactOwner,
+    name: document.getElementById('f-name').value.trim(),
+    rel: document.getElementById('f-rel').value.trim(),
+    phone: document.getElementById('f-phone').value.trim(),
+    phoneLabel: document.getElementById('f-phone-label').value.trim(),
+    notes: document.getElementById('f-notes').value.trim()
+  };
+  if (!entry.name || !entry.phone) { alert('Name and phone number are required.'); return; }
+  if (contactIndex >= 0) { entry.owner = data.contacts[contactIndex].owner; data.contacts[contactIndex] = entry; }
+  else data.contacts.push(entry);
+  persist('contacts');
+  renderContacts();
+  closeModal('formModal');
+}
+function delContact(i) {
+  if (!confirm('Remove ' + data.contacts[i].name + '?')) return;
+  data.contacts.splice(i, 1);
+  persist('contacts');
+  renderContacts();
+}
+
+// ---------- doctors ----------
+function renderDoctors() {
+  PEOPLE.forEach(owner => {
+    const el = document.getElementById('doctors-' + owner);
+    if (!el) return;
+    const items = data.doctors.map((d, i) => ({ d, i })).filter(x => x.d.owner === owner);
+    if (!items.length) {
+      el.innerHTML = '<div class="empty">No doctors listed - tap Edit, then + Add doctor.</div>';
+      return;
+    }
+    el.innerHTML = items.map(({ d, i }) =>
+      '<div class="card">' +
+      '<div class="c-top">' +
+      '<div class="avatar doc">' + esc(initials(d.name)) + '</div>' +
+      '<div class="c-info"><div class="c-name">' + esc(d.name) + '</div><div class="c-rel">' + esc(d.spec) + (d.office ? ' &middot; ' + esc(d.office) : '') + '</div></div>' +
+      '<div class="row-edit">' +
+      '<button class="icon-btn" onclick="openDoctorForm(\'' + owner + '\',' + i + ')">&#9998;</button>' +
+      '<button class="icon-btn del" onclick="delDoctor(' + i + ')">&#10005;</button>' +
+      '</div></div>' +
+      '<div class="c-actions">' + numRow(d.phone, 'Office') + '</div>' +
+      (d.notes ? '<div class="c-notes">' + esc(d.notes) + '</div>' : '') +
+      '</div>'
+    ).join('');
+  });
+}
+function openDoctorForm(owner, index = -1) {
+  doctorOwner = owner; doctorIndex = index;
+  const d = index >= 0 ? data.doctors[index] : { name: '', spec: '', phone: '', office: '', notes: '' };
+  document.getElementById('doctorTitle').textContent = (index >= 0 ? 'Edit' : 'Add') + ' doctor - ' + owner;
+  document.getElementById('dr-name').value = d.name;
+  document.getElementById('dr-spec').value = d.spec;
+  document.getElementById('dr-phone').value = d.phone;
+  document.getElementById('dr-office').value = d.office || '';
+  document.getElementById('dr-notes').value = d.notes || '';
+  openModal('doctorModal');
+}
+function saveDoctor() {
+  const d = {
+    owner: doctorOwner,
+    name: document.getElementById('dr-name').value.trim(),
+    spec: document.getElementById('dr-spec').value.trim(),
+    phone: document.getElementById('dr-phone').value.trim(),
+    office: document.getElementById('dr-office').value.trim(),
+    notes: document.getElementById('dr-notes').value.trim()
+  };
+  if (!d.name || !d.phone) { alert('Name and phone number are required.'); return; }
+  if (doctorIndex >= 0) { d.owner = data.doctors[doctorIndex].owner; data.doctors[doctorIndex] = d; }
+  else data.doctors.push(d);
+  persist('doctors');
+  renderDoctors();
+  closeModal('doctorModal');
+}
+function delDoctor(i) {
+  if (!confirm('Remove ' + data.doctors[i].name + '?')) return;
+  data.doctors.splice(i, 1);
+  persist('doctors');
+  renderDoctors();
+}
+
+// ---------- medical profiles + meds ----------
+function medRows(ownerKey, ownerLabel) {
+  const personMeds = data.meds.map((m, mi) => ({ ...m, _i: mi })).filter(m => m.owner === ownerKey);
+  const rows = personMeds.length
+    ? personMeds.map(m =>
+        '<div class="med-line"><span>' + esc(m.name) +
+        (m.notes ? '<span class="mnote">' + esc(m.notes) + '</span>' : '') +
+        '<span class="med-inline-edit">' +
+        '<button class="icon-btn mini" onclick="openMedForm(\'' + jsq(ownerKey) + '\',\'' + jsq(ownerLabel) + '\',' + m._i + ')">&#9998;</button>' +
+        '<button class="icon-btn del mini" onclick="delMed(' + m._i + ')">&#10005;</button></span>' +
+        '</span><span class="dose">' + esc(m.dose) + '</span></div>'
+      ).join('')
+    : '<div class="empty" style="padding:2px 0">None listed.</div>';
+  return '<div class="med-rows"><div class="k-row">Medications</div>' + rows + '</div>' +
+    '<button class="add-inline" onclick="openMedForm(\'' + jsq(ownerKey) + '\',\'' + jsq(ownerLabel) + '\')">+ Add medication for ' + esc(ownerLabel) + '</button>';
+}
+function renderMedical() {
+  PEOPLE.forEach(owner => {
+    const el = document.getElementById('medical-' + owner);
+    if (!el) return;
+    const p = data.profiles[owner];
+    if (!p) {
+      el.innerHTML = '<button class="setup-profile" onclick="openProfileForm(\'' + owner + '\')">+ Set up ' + owner + '\u2019s profile</button>';
+      return;
+    }
+    el.innerHTML = '<div class="card person-card ' + owner.toLowerCase() + '">' +
+      '<div class="p-head"><div class="p-name">' + esc(owner) + '</div>' +
+      '<div class="row-edit"><button class="icon-btn" onclick="openProfileForm(\'' + owner + '\')">&#9998;</button></div></div>' +
+      '<div class="p-grid">' +
+      (p.dob ? '<div class="p-item"><div class="k">DOB</div><div class="v">' + esc(p.dob) + '</div></div>' : '') +
+      (p.blood ? '<div class="p-item"><div class="k">Blood type</div><div class="v">' + esc(p.blood) + '</div></div>' : '') +
+      '<div class="p-item warn wide"><div class="k">Allergies</div><div class="v">' + esc(p.allergies || 'Not listed') + '</div></div>' +
+      (p.conditions ? '<div class="p-item wide"><div class="k">Conditions</div><div class="v">' + esc(p.conditions) + '</div></div>' : '') +
+      (p.notes ? '<div class="p-item wide"><div class="k">Notes</div><div class="v">' + esc(p.notes) + '</div></div>' : '') +
+      '</div>' +
+      medRows(owner, owner) +
+      '</div>';
+  });
+}
+function openProfileForm(owner) {
+  profileOwner = owner;
+  const p = data.profiles[owner] || { dob: '', blood: '', allergies: '', conditions: '', notes: '' };
+  document.getElementById('profileTitle').textContent = owner + '\u2019s profile';
+  document.getElementById('p-dob').value = p.dob || '';
+  document.getElementById('p-blood').value = p.blood || '';
+  document.getElementById('p-allergies').value = p.allergies || '';
+  document.getElementById('p-conditions').value = p.conditions || '';
+  document.getElementById('p-notes').value = p.notes || '';
+  openModal('profileModal');
+}
+function saveProfile() {
+  data.profiles[profileOwner] = {
+    dob: document.getElementById('p-dob').value.trim(),
+    blood: document.getElementById('p-blood').value.trim(),
+    allergies: document.getElementById('p-allergies').value.trim(),
+    conditions: document.getElementById('p-conditions').value.trim(),
+    notes: document.getElementById('p-notes').value.trim()
+  };
+  persist('profiles');
+  renderMedical();
+  closeModal('profileModal');
+}
+function openMedForm(ownerKey, ownerLabel, index = -1) {
+  medOwner = ownerKey; medIndex = index;
+  const m = index >= 0 ? data.meds[index] : { name: '', dose: '', notes: '' };
+  document.getElementById('medTitle').textContent = (index >= 0 ? 'Edit' : 'Add') + ' medication - ' + ownerLabel;
+  document.getElementById('m-name').value = m.name;
+  document.getElementById('m-dose').value = m.dose;
+  document.getElementById('m-notes').value = m.notes || '';
+  openModal('medModal');
+}
+function saveMed() {
+  const m = {
+    owner: medOwner,
+    name: document.getElementById('m-name').value.trim(),
+    dose: document.getElementById('m-dose').value.trim(),
+    notes: document.getElementById('m-notes').value.trim()
+  };
+  if (!m.name) { alert('Medication name is required.'); return; }
+  if (medIndex >= 0) { m.owner = data.meds[medIndex].owner; data.meds[medIndex] = m; }
+  else data.meds.push(m);
+  persist('meds');
+  renderMedical();
+  renderPets();
+  closeModal('medModal');
+}
+function delMed(i) {
+  if (!confirm('Remove ' + data.meds[i].name + '?')) return;
+  data.meds.splice(i, 1);
+  persist('meds');
+  renderMedical();
+  renderPets();
+}
+
+// ---------- pets ----------
+function petById(id) { return data.pets.find(p => p.id === id); }
+function renderPets() {
+  const el = document.getElementById('pets-list');
+  if (!el) return;
+  if (!data.pets.length) {
+    el.innerHTML = '<div class="empty">No pets yet - tap Edit, then + Add pet.</div>';
+    return;
+  }
+  el.innerHTML = data.pets.map((p, i) => {
+    const petDocTiles = data.petdocs
+      .map((d, di) => ({ d, di }))
+      .filter(x => x.d.petId === p.id)
+      .map(({ d, di }) => docTile(d, di, 'petdocs'));
+    petDocTiles.push('<button class="upload-tile" onclick="pickFile(\'petdocs\',\'' + jsq(p.id) + '\')"><span class="plus">+</span>Add vaccine or record</button>');
+    return '<div class="card person-card pet">' +
+      '<div class="p-head"><div><div class="pet-name">' + esc(p.name) + '</div><div class="p-sub">' + esc(p.breed) + '</div></div>' +
+      '<div class="row-edit">' +
+      '<button class="icon-btn" onclick="openPetForm(' + i + ')">&#9998;</button>' +
+      '<button class="icon-btn del" onclick="delPet(' + i + ')">&#10005;</button>' +
+      '</div></div>' +
+      '<div class="p-grid">' +
+      (p.dob ? '<div class="p-item"><div class="k">DOB</div><div class="v">' + esc(p.dob) + '</div></div>' : '') +
+      (p.chip ? '<div class="p-item"><div class="k">Microchip</div><div class="v">' + esc(p.chip) + '</div></div>' : '') +
+      '<div class="p-item warn wide"><div class="k">Allergies</div><div class="v">' + esc(p.allergies || 'Not listed') + '</div></div>' +
+      (p.conditions ? '<div class="p-item wide"><div class="k">Conditions</div><div class="v">' + esc(p.conditions) + '</div></div>' : '') +
+      (p.notes ? '<div class="p-item wide"><div class="k">Notes</div><div class="v">' + esc(p.notes) + '</div></div>' : '') +
+      '</div>' +
+      medRows(p.id, p.name) +
+      '<div class="med-rows"><div class="k-row">Vaccines &amp; Records</div>' +
+      '<div class="docs-grid in-card">' + petDocTiles.join('') + '</div></div>' +
+      '<button class="share-pet" onclick="sharePetSummary(\'' + jsq(p.id) + '\')">' + SHARE_SVG + 'Share ' + esc(p.name) + '\u2019s info</button>' +
+      '</div>';
+  }).join('');
+}
+function openPetForm(index = -1) {
+  petIndex = index;
+  const p = index >= 0 ? data.pets[index] : { name: '', breed: '', dob: '', chip: '', allergies: '', conditions: '', notes: '' };
+  document.getElementById('petTitle').textContent = index >= 0 ? 'Edit ' + p.name : 'Add pet';
+  document.getElementById('pet-name').value = p.name;
+  document.getElementById('pet-breed').value = p.breed;
+  document.getElementById('pet-dob').value = p.dob || '';
+  document.getElementById('pet-chip').value = p.chip || '';
+  document.getElementById('pet-allergies').value = p.allergies || '';
+  document.getElementById('pet-conditions').value = p.conditions || '';
+  document.getElementById('pet-notes').value = p.notes || '';
+  openModal('petModal');
+}
+function savePet() {
+  const p = {
+    name: document.getElementById('pet-name').value.trim(),
+    breed: document.getElementById('pet-breed').value.trim(),
+    dob: document.getElementById('pet-dob').value.trim(),
+    chip: document.getElementById('pet-chip').value.trim(),
+    allergies: document.getElementById('pet-allergies').value.trim(),
+    conditions: document.getElementById('pet-conditions').value.trim(),
+    notes: document.getElementById('pet-notes').value.trim()
+  };
+  if (!p.name) { alert('Name is required.'); return; }
+  if (petIndex >= 0) { p.id = data.pets[petIndex].id; data.pets[petIndex] = p; }
+  else { p.id = 'pet_' + Date.now(); data.pets.push(p); }
+  persist('pets');
+  renderPets();
+  closeModal('petModal');
+}
+function delPet(i) {
+  const p = data.pets[i];
+  if (!confirm('Remove ' + p.name + ', including meds and records?')) return;
+  data.meds = data.meds.filter(m => m.owner !== p.id);
+  persist('meds');
+  // remove this pet's files
+  const toRemove = data.petdocs.filter(d => d.petId === p.id);
+  data.petdocs = data.petdocs.filter(d => d.petId !== p.id);
+  cacheLocal('petdocs');
+  if (fb) toRemove.forEach(f => fb.deleteDoc(fb.fileRef(f.id)).catch(err => { console.error(err); setSync('error'); }));
+  data.pets.splice(i, 1);
+  persist('pets');
+  renderPets();
+}
+
+// ---------- documents ----------
+function docTile(d, i, collection) {
+  const face = d.type === 'pdf'
+    ? '<div class="pdf-face">PDF</div>'
+    : '<img src="' + d.data + '" alt="' + esc(d.name) + '">';
+  return '<div class="doc-tile">' + face +
+    '<div class="doc-label">' + esc(d.name) + '</div>' +
+    (d.tag ? '<div class="doc-tag">' + esc(d.tag) + '</div>' : '') +
+    '<div class="doc-foot">' +
+    '<button class="view" onclick="openDoc(\'' + collection + '\',' + i + ')">View</button>' +
+    '<button onclick="shareDoc(\'' + collection + '\',' + i + ')">Share</button>' +
+    '</div>' +
+    '<div class="doc-manage">' +
+    '<button onclick="openDocMeta(\'' + collection + '\',' + i + ')">Rename</button>' +
+    '<button class="d" onclick="delDoc(\'' + collection + '\',' + i + ')">Delete</button>' +
+    '</div></div>';
+}
+function renderDocs() {
+  PEOPLE.forEach(owner => {
+    const grid = document.getElementById('docs-' + owner);
+    if (!grid) return;
+    const tiles = data.docs
+      .map((d, i) => ({ d, i }))
+      .filter(x => x.d.owner === owner)
+      .map(({ d, i }) => docTile(d, i, 'docs'));
+    tiles.push('<button class="upload-tile" onclick="pickFile(\'docs\',\'' + owner + '\')"><span class="plus">+</span>Add photo or PDF</button>');
+    grid.innerHTML = tiles.join('');
+  });
+}
+function pickFile(collection, target) {
+  docCollection = collection;
+  uploadTarget = target;
+  openModal('uploadChoice');
+}
+function readAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    readAsDataURL(file).then(src => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 1400;
+        let w = img.width, h = img.height;
+        const scale = Math.min(1, maxDim / Math.max(w, h));
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = reject;
+      img.src = src;
+    }).catch(reject);
+  });
+}
+async function handleFile(ev) {
+  const file = ev.target.files[0];
+  ev.target.value = '';
+  if (!file) return;
+  let dataUrl, type;
+  if (file.type === 'application/pdf') {
+    const limit = fb ? 650 * 1024 : 3 * 1024 * 1024;
+    if (file.size > limit) {
+      alert(fb
+        ? 'That PDF is too large to sync (limit ~650 KB). A photo or screenshot of it will work - images get compressed automatically.'
+        : 'That PDF is over 3 MB. A photo or screenshot of it will save more reliably.');
+      return;
+    }
+    dataUrl = await readAsDataURL(file);
+    type = 'pdf';
+  } else {
+    try { dataUrl = await compressImage(file); } catch (e) { alert('Could not read that image.'); return; }
+    type = 'image';
+  }
+  if (fb && dataUrl.length > 950000) {
+    alert('That file is too large to sync. Try a smaller photo or a screenshot.');
+    return;
+  }
+  const entry = {
+    id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    kind: docCollection === 'docs' ? 'doc' : 'petdoc',
+    name: file.name,
+    tag: '',
+    type,
+    data: dataUrl,
+    createdAt: Date.now()
+  };
+  if (entry.kind === 'doc') entry.owner = uploadTarget;
+  else entry.petId = uploadTarget;
+  // optimistic local add; the snapshot will confirm
+  (entry.kind === 'petdoc' ? data.petdocs : data.docs).push(entry);
+  cacheLocal(entry.kind === 'petdoc' ? 'petdocs' : 'docs');
+  if (fb) fb.setDoc(fb.fileRef(entry.id), entry).catch(err => { console.error(err); setSync('error', err); toast('Upload failed to sync'); });
+  renderDocs(); renderPets();
+}
+function getDoc(collection, i) { return collection === 'docs' ? data.docs[i] : data.petdocs[i]; }
+
+// ---------- in-app viewer ----------
+let currentDoc = null;
+function openDoc(collection, i) {
+  currentDoc = { collection, i };
+  const d = getDoc(collection, i);
+  const body = document.getElementById('viewerBody');
+  if (d.type === 'pdf') {
+    body.innerHTML = '<iframe src="' + d.data + '"></iframe>';
+  } else {
+    body.innerHTML = '<div style="text-align:center;max-height:100%;">' +
+      '<img src="' + d.data + '" alt="' + esc(d.name) + '">' +
+      '<div style="color:rgba(255,255,255,0.55);font-size:0.75rem;font-weight:700;margin-top:10px;">Tip: press and hold the image to share or save it</div>' +
+      '</div>';
+  }
+  document.getElementById('viewer').classList.add('open');
+}
+function closeViewer() {
+  document.getElementById('viewer').classList.remove('open');
+  document.getElementById('viewerBody').innerHTML = '';
+  currentDoc = null;
+}
+function shareCurrentDoc() { if (currentDoc) shareDoc(currentDoc.collection, currentDoc.i); }
+function downloadCurrentDoc() { if (currentDoc) downloadDoc(currentDoc.collection, currentDoc.i); }
+
+function dataURLtoBlob(dataurl) {
+  const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1], bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8 = new Uint8Array(n);
+  while (n--) u8[n] = bstr.charCodeAt(n);
+  return new Blob([u8], { type: mime });
+}
+function docFileName(d, blob) {
+  const ext = d.type === 'pdf' ? '.pdf' : (blob.type.includes('png') ? '.png' : '.jpg');
+  return d.name.includes('.') ? d.name : d.name + ext;
+}
+function downloadDoc(collection, i) {
+  const d = getDoc(collection, i);
+  const blob = dataURLtoBlob(d.data);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = docFileName(d, blob);
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast('Saved - share it from your Photos or Files app');
+}
+async function shareDoc(collection, i) {
+  const d = getDoc(collection, i);
+  const blob = dataURLtoBlob(d.data);
+  const fname = docFileName(d, blob);
+  try {
+    const file = new File([blob], fname, { type: blob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: d.name });
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+  }
+  try {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    toast('Opened in a new tab - use the share button there');
+    return;
+  } catch (e) {}
+  downloadDoc(collection, i);
+}
+async function sharePetSummary(petId) {
+  const p = petById(petId);
+  if (!p) return;
+  const meds = data.meds.filter(m => m.owner === petId);
+  const docs = data.petdocs.filter(d => d.petId === petId);
+  const lines = [p.name + (p.breed ? ' - ' + p.breed : '')];
+  if (p.dob) lines.push('DOB: ' + p.dob);
+  if (p.chip) lines.push('Microchip: ' + p.chip);
+  lines.push('Allergies: ' + (p.allergies || 'None listed'));
+  if (p.conditions) lines.push('Conditions: ' + p.conditions);
+  if (meds.length) lines.push('Medications: ' + meds.map(m => m.name + (m.dose ? ' (' + m.dose + ')' : '')).join(', '));
+  if (docs.length) lines.push('Records on file: ' + docs.map(d => d.name).join(', '));
+  if (p.notes) lines.push('Notes: ' + p.notes);
+  const text = lines.join('\n');
+  if (navigator.share) {
+    try { await navigator.share({ title: p.name + ' - pet info', text }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  copyNum(text);
+  toast('Copied ' + p.name + '\u2019s info - paste into a text or email');
+}
+function openDocMeta(collection, i) {
+  docCollection = collection; docIndex = i;
+  const d = getDoc(collection, i);
+  document.getElementById('d-name').value = d.name;
+  document.getElementById('d-tag').value = d.tag || '';
+  openModal('docModal');
+}
+function saveDocMeta() {
+  const d = getDoc(docCollection, docIndex);
+  d.name = document.getElementById('d-name').value.trim() || d.name;
+  d.tag = document.getElementById('d-tag').value.trim();
+  cacheLocal(docCollection);
+  if (fb) fb.setDoc(fb.fileRef(d.id), { name: d.name, tag: d.tag }, { merge: true }).catch(err => { console.error(err); setSync('error', err); });
+  renderDocs();
+  renderPets();
+  closeModal('docModal');
+}
+function delDoc(collection, i) {
+  const d = getDoc(collection, i);
+  if (!confirm('Remove ' + d.name + '?')) return;
+  if (collection === 'docs') data.docs.splice(i, 1);
+  else data.petdocs.splice(i, 1);
+  cacheLocal(collection);
+  if (fb) fb.deleteDoc(fb.fileRef(d.id)).catch(err => { console.error(err); setSync('error', err); });
+  renderDocs();
+  renderPets();
+}
+
+// ---------- notes ----------
+function saveNotes(owner) {
+  data.notes[owner] = document.getElementById('notes-' + owner).value;
+  persist('notes');
+}
+function renderNotes() {
+  PEOPLE.forEach(owner => {
+    const el = document.getElementById('notes-' + owner);
+    if (el && document.activeElement !== el) el.value = (data.notes && data.notes[owner]) || '';
+  });
+}
+
+// ---------- render all + init ----------
+function renderAll() {
+  renderContacts();
+  renderDoctors();
+  renderMedical();
+  renderDocs();
+  renderPets();
+  renderNotes();
+  renderResponder();
+}
+
+// ---------- first responder card ----------
+function responderCardHtml(r, opts) {
+  opts = opts || {};
+  const has = r && (r.address || r.house || r.ice1p);
+  if (!has) return '';
+  let ice = '';
+  if (r.ice1p) ice += numRow(r.ice1p, r.ice1n || 'Emergency contact');
+  if (r.ice2p) ice += numRow(r.ice2p, r.ice2n || 'Emergency contact');
+  return '<div class="card person-card" style="--pc:var(--coral);">' +
+    '<div class="p-head"><div class="p-name">In case of emergency</div>' +
+    (opts.editable ? '<div class="row-edit"><button class="icon-btn" onclick="openResponderForm()">&#9998;</button></div>' : '') +
+    '</div>' +
+    '<div class="p-grid">' +
+    (r.address ? '<div class="p-item warn wide"><div class="k">Address</div><div class="v">' + esc(r.address) + '</div></div>' : '') +
+    (r.house ? '<div class="p-item wide"><div class="k">Household</div><div class="v">' + esc(r.house) + '</div></div>' : '') +
+    '</div>' +
+    (ice ? '<div class="c-actions" style="margin-top:12px;">' + ice + '</div>' : '') +
+    '</div>';
+}
+function renderResponder() {
+  const el = document.getElementById('responder-card');
+  if (!el) return;
+  const card = responderCardHtml(data.responder, { editable: true });
+  el.innerHTML = card || '<button class="setup-profile" onclick="openResponderForm()">+ Set up the first responder card</button>';
+  if (card) el.innerHTML += '<button class="add-inline" onclick="openResponderForm()" style="display:block;">Edit card</button>';
+}
+function openResponderForm() {
+  const r = data.responder || {};
+  document.getElementById('r-address').value = r.address || '';
+  document.getElementById('r-house').value = r.house || '';
+  document.getElementById('r-ice1n').value = r.ice1n || '';
+  document.getElementById('r-ice1p').value = r.ice1p || '';
+  document.getElementById('r-ice2n').value = r.ice2n || '';
+  document.getElementById('r-ice2p').value = r.ice2p || '';
+  openModal('responderModal');
+}
+function saveResponder() {
+  data.responder = {
+    address: document.getElementById('r-address').value.trim(),
+    house: document.getElementById('r-house').value.trim(),
+    ice1n: document.getElementById('r-ice1n').value.trim(),
+    ice1p: document.getElementById('r-ice1p').value.trim(),
+    ice2n: document.getElementById('r-ice2n').value.trim(),
+    ice2p: document.getElementById('r-ice2p').value.trim()
+  };
+  persist('responder');
+  renderResponder();
+  closeModal('responderModal');
+}
+function openLockResponder() {
+  const body = document.getElementById('lockResponderBody');
+  const card = responderCardHtml(data.responder, { editable: false });
+  body.innerHTML = card || '<div class="empty">Nothing here yet - the first responder card gets set up inside the app (First Responder page).</div>';
+  document.getElementById('lockResponder').classList.add('open');
+}
+
+// ---------- backup & restore ----------
+function exportBackup() {
+  const payload = { app: 'emergency-hub', version: 1, exported: new Date().toISOString(), data: {} };
+  CORE_KEYS.forEach(k => payload.data[k] = data[k]);
+  payload.data.docs = data.docs;
+  payload.data.petdocs = data.petdocs;
+  const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'emergency-hub-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast('Backup saved to your files');
+}
+function importBackup(ev) {
+  const file = ev.target.files[0];
+  ev.target.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let payload;
+    try { payload = JSON.parse(reader.result); } catch (e) { alert('That file is not a valid backup.'); return; }
+    if (!payload || payload.app !== 'emergency-hub' || !payload.data) { alert('That file is not an Emergency Hub backup.'); return; }
+    if (!confirm('Restore from backup dated ' + (payload.exported || 'unknown') + '? This replaces current entries.')) return;
+    CORE_KEYS.forEach(k => { if (payload.data[k] !== undefined) { data[k] = payload.data[k]; persist(k); } });
+    if (Array.isArray(payload.data.docs)) { data.docs = payload.data.docs; cacheLocal('docs'); }
+    if (Array.isArray(payload.data.petdocs)) { data.petdocs = payload.data.petdocs; cacheLocal('petdocs'); }
+    if (fb) [...data.docs, ...data.petdocs].forEach(f => fb.setDoc(fb.fileRef(f.id), f).catch(err => { console.error(err); setSync('error', err); }));
+    renderAll();
+    toast('Backup restored');
+  };
+  reader.readAsText(file);
+}
+
+// ---------- input formatters (numeric keypads + auto-format) ----------
+function fmtPhone(v) {
+  const d = v.replace(/\D/g, '').slice(0, 10);
+  if (d.length < 4) return d;
+  if (d.length < 7) return d.slice(0, 3) + '-' + d.slice(3);
+  return d.slice(0, 3) + '-' + d.slice(3, 6) + '-' + d.slice(6);
+}
+function fmtDate(v) {
+  const d = v.replace(/\D/g, '').slice(0, 8);
+  if (d.length < 3) return d;
+  if (d.length < 5) return d.slice(0, 2) + '/' + d.slice(2);
+  return d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4);
+}
+function attachFmt(id, fmt) {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => { el.value = fmt(el.value); });
+}
+['f-phone', 'dr-phone', 'r-ice1p', 'r-ice2p'].forEach(id => attachFmt(id, fmtPhone));
+['p-dob', 'pet-dob'].forEach(id => attachFmt(id, fmtDate));
+
+// ---------- printable emergency sheet ----------
+function prLine(k, v) { return v ? '<div class="pr-line"><b>' + esc(k) + ':</b> ' + esc(v) + '</div>' : ''; }
+function printSheet() {
+  const r = data.responder || {};
+  let h = '<h1>Emergency Information</h1><div class="pr-date">Printed ' + new Date().toLocaleDateString() + ' &mdash; keep with household papers</div>';
+  if (r.address || r.house || r.ice1p) {
+    h += '<h2>Home</h2>' +
+      prLine('Address', r.address) +
+      prLine('Household', r.house) +
+      prLine('Emergency contact', r.ice1p ? ((r.ice1n ? r.ice1n + ' - ' : '') + r.ice1p) : '') +
+      prLine('Emergency contact', r.ice2p ? ((r.ice2n ? r.ice2n + ' - ' : '') + r.ice2p) : '');
+  }
+  PEOPLE.forEach(o => {
+    const p = data.profiles[o];
+    const meds = data.meds.filter(m => m.owner === o);
+    const drs = data.doctors.filter(d => d.owner === o);
+    const cts = data.contacts.filter(c => c.owner === o);
+    h += '<h2>' + esc(o) + '</h2>';
+    if (p) {
+      h += prLine('DOB', p.dob) + prLine('Blood type', p.blood) +
+        prLine('Allergies', p.allergies || 'None listed') +
+        prLine('Conditions', p.conditions) + prLine('Notes', p.notes);
+    }
+    if (meds.length) h += prLine('Medications', meds.map(m => m.name + (m.dose ? ' (' + m.dose + ')' : '')).join('; '));
+    if (drs.length) h += prLine('Doctors', drs.map(d => d.name + (d.spec ? ' - ' + d.spec : '') + (d.phone ? ', ' + d.phone : '')).join('; '));
+    if (cts.length) h += prLine('Contacts', cts.map(c => c.name + (c.rel ? ' (' + c.rel + ')' : '') + ' ' + c.phone).join('; '));
+    const n = (data.notes && data.notes[o]) || '';
+    if (n) h += prLine('Insurance notes', n);
+  });
+  const vets = data.contacts.filter(c => c.owner === 'Vets');
+  if (data.pets.length || vets.length) {
+    h += '<h2>Pets</h2>';
+    if (vets.length) h += prLine('Vets', vets.map(c => c.name + ' ' + c.phone).join('; '));
+    data.pets.forEach(p => {
+      const meds = data.meds.filter(m => m.owner === p.id);
+      const vax = data.petdocs.filter(d => d.petId === p.id);
+      h += '<h3>' + esc(p.name) + (p.breed ? ' - ' + esc(p.breed) : '') + '</h3>' +
+        prLine('DOB', p.dob) + prLine('Microchip', p.chip) +
+        prLine('Allergies', p.allergies || 'None listed') +
+        prLine('Conditions', p.conditions) + prLine('Notes', p.notes);
+      if (meds.length) h += prLine('Medications', meds.map(m => m.name + (m.dose ? ' (' + m.dose + ')' : '')).join('; '));
+      if (vax.length) h += prLine('Records on file', vax.map(d => d.name + (d.tag ? ' [' + d.tag + ']' : '')).join('; '));
+    });
+  }
+  document.getElementById('printSheet').innerHTML = h;
+  window.print();
+}
+
+// ---------- biometric (Face ID / fingerprint) unlock ----------
+function b64buf(buf) { return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))); }
+function unb64(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
+function bioStored(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function bioStore(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function renderBioButton() {
+  const btn = document.getElementById('bioBtn');
+  if (btn && window.PublicKeyCredential && bioStored('eh_bio_cred')) btn.style.display = 'inline-block';
+}
+async function enrollBio() {
+  try {
+    const cred = await navigator.credentials.create({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      rp: { name: 'Emergency Hub', id: location.hostname },
+      user: { id: crypto.getRandomValues(new Uint8Array(16)), name: 'household', displayName: 'Household' },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
+      timeout: 60000
+    }});
+    bioStore('eh_bio_cred', b64buf(cred.rawId));
+    bioStore('eh_bio_key', PIN_HASH);
+    renderBioButton();
+    renderBioSetupBtn();
+    toast('Face ID unlock enabled on this device');
+  } catch (e) { console.warn('Biometric enrollment cancelled/failed:', e && e.name); }
+}
+async function setupBio() {
+  try { localStorage.removeItem('eh_bio_declined'); } catch (e) {}
+  await enrollBio();
+  renderBioSetupBtn();
+}
+async function renderBioSetupBtn() {
+  const btn = document.getElementById('bioSetupBtn');
+  if (!btn) return;
+  if (!window.PublicKeyCredential || bioStored('eh_bio_cred')) { btn.style.display = 'none'; return; }
+  let available = false;
+  try { available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); } catch (e) {}
+  btn.style.display = available ? 'inline-block' : 'none';
+}
+async function maybeOfferBio() {
+  if (bioStored('eh_bio_cred') || bioStored('eh_bio_declined')) return;
+  if (!window.PublicKeyCredential) return;
+  let available = false;
+  try { available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); } catch (e) {}
+  if (!available) return;
+  if (confirm('Enable Face ID / fingerprint unlock on this device? The keypad code still works as a backup.')) enrollBio();
+  else bioStore('eh_bio_declined', '1');
+}
+async function bioUnlock() {
+  const credId = bioStored('eh_bio_cred');
+  if (!credId) return;
+  try {
+    await navigator.credentials.get({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials: [{ type: 'public-key', id: unb64(credId) }],
+      userVerification: 'required',
+      timeout: 60000
+    }});
+    const key = bioStored('eh_bio_key');
+    if (key === PIN_HASH) {
+      try { sessionStorage.setItem('eh_key', key); } catch (e) {}
+      unlockApp(key);
+    }
+  } catch (e) { /* user cancelled Face ID - keypad still available */ }
+}
+
+// ---------- connectivity + service worker ----------
+window.addEventListener('offline', () => setSync('offline'));
+window.addEventListener('online', () => {
+  if (fb) setSync('synced');
+  else if (HOUSEHOLD_ID) { setSync('local'); initFirebase(); }
+});
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const nw = reg.installing;
+      if (!nw) return;
+      nw.addEventListener('statechange', () => {
+        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+          document.getElementById('updateBanner').classList.add('show');
+        }
+      });
+    });
+  }).catch(e => console.warn('SW registration failed:', e));
+}
+
+// ---------- PIN lock ----------
+let pinBuf = '';
+async function sha256Hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function renderPinDots() {
+  document.querySelectorAll('#pinDots span').forEach((s, i) => s.classList.toggle('filled', i < pinBuf.length));
+}
+function pinDigit(d) {
+  if (pinBuf.length >= 4) return;
+  pinBuf += d;
+  renderPinDots();
+  if (pinBuf.length === 4) checkPin();
+}
+function pinBack() {
+  pinBuf = pinBuf.slice(0, -1);
+  renderPinDots();
+}
+async function checkPin() {
+  let h;
+  try { h = await sha256Hex(pinBuf + PIN_SALT); }
+  catch (e) { alert('This page needs to run over https for the code screen to work.'); return; }
+  if (h === PIN_HASH) {
+    try { sessionStorage.setItem('eh_key', h); } catch (e) {}
+    unlockApp(h);
+    setTimeout(maybeOfferBio, 700);
+  } else {
+    const dots = document.getElementById('pinDots');
+    dots.classList.add('shake');
+    setTimeout(() => { dots.classList.remove('shake'); pinBuf = ''; renderPinDots(); }, 380);
+  }
+}
+function unlockApp(hash) {
+  HOUSEHOLD_ID = HID_BASE + '-' + hash.slice(0, 16);
+  document.getElementById('lockScreen').classList.add('hidden');
+  renderAll();
+  renderBioSetupBtn();
+  initFirebase();
+}
+function lockNow() {
+  try { sessionStorage.removeItem('eh_key'); } catch (e) {}
+  pinBuf = '';
+  renderPinDots();
+  if (editing) toggleEdit();
+  document.getElementById('lockScreen').classList.remove('hidden');
+  showPage('home');
+}
+// Keyboard support for the code screen
+document.addEventListener('keydown', e => {
+  if (document.getElementById('lockScreen').classList.contains('hidden')) return;
+  if (e.key >= '0' && e.key <= '9') pinDigit(e.key);
+  else if (e.key === 'Backspace') pinBack();
+});
+renderBioButton();
+// Already unlocked this session? Skip the code screen.
+// Otherwise, if Face ID is enrolled, offer it immediately - keypad stays available.
+(function () {
+  let saved = null;
+  try { saved = sessionStorage.getItem('eh_key'); } catch (e) {}
+  if (saved === PIN_HASH) { unlockApp(saved); return; }
+  if (bioStored('eh_bio_cred') && window.PublicKeyCredential) setTimeout(bioUnlock, 400);
+})();
+
+</script>
+</body>
+</html>
