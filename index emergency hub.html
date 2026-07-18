@@ -396,6 +396,66 @@
   .viewer-body img { max-width: 100%; max-height: 100%; border-radius: 8px; }
   .viewer-body iframe { border: 0; width: 100%; height: 100%; background: #fff; border-radius: 8px; }
 
+  /* ---------- Photo editor (crop / rotate / scan) ---------- */
+  .editor {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(20,14,18,0.97);
+    z-index: 60;
+    flex-direction: column;
+  }
+  .editor.open { display: flex; }
+  .editor-stage {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    padding: 18px;
+    min-height: 0;
+  }
+  .editor-wrap { position: relative; }
+  #editCanvas { display: block; border-radius: 6px; }
+  .crop-box {
+    position: absolute;
+    border: 2px solid #fff;
+    border-radius: 4px;
+    box-shadow: 0 0 0 9999px rgba(10,6,9,0.6);
+    cursor: move;
+    touch-action: none;
+  }
+  .crop-handle { position: absolute; width: 30px; height: 30px; touch-action: none; }
+  .crop-handle::after {
+    content: '';
+    position: absolute; inset: 7px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  }
+  .crop-handle.nw { left: -15px; top: -15px; cursor: nwse-resize; }
+  .crop-handle.ne { right: -15px; top: -15px; cursor: nesw-resize; }
+  .crop-handle.sw { left: -15px; bottom: -15px; cursor: nesw-resize; }
+  .crop-handle.se { right: -15px; bottom: -15px; cursor: nwse-resize; }
+  .editor-hint {
+    text-align: center;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.75rem; font-weight: 700;
+    padding: 6px 16px 10px;
+  }
+  .editor-tools {
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    padding: 0 16px 26px;
+  }
+  .editor-tools button {
+    border: none;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    border-radius: 999px;
+    padding: 11px 16px;
+    font-size: 0.85rem; font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .editor-tools button.on { background: var(--teal); }
+
   .upload-tile {
     border: 1.5px dashed var(--teal-mid);
     border-radius: 18px;
@@ -495,10 +555,9 @@
   .cover-btn.c-responder { grid-column: 1 / -1; }
   .cover-btn.c-responder .ico { background: var(--coral-soft); color: var(--coral); }
 
-  .backup-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .backup-row { display: flex; gap: 10px; margin-top: 22px; }
   .backup-row button {
     flex: 1;
-    min-width: 44%;
     border: none;
     background: transparent;
     border: 1.5px dashed var(--line);
@@ -706,7 +765,6 @@
       <button onclick="exportBackup()">&#8681; Export backup</button>
       <button onclick="document.getElementById('backupInput').click()">&#8682; Restore backup</button>
       <button onclick="printSheet()">&#128424;&#65039; Print sheet</button>
-      <button id="bioSetupBtn" style="display:none;" onclick="setupBio()">&#128274; Set up Face ID unlock</button>
     </div>
   </div>
 
@@ -960,9 +1018,11 @@
   <div class="modal">
     <h3>Add document</h3>
     <div class="btns" style="flex-direction:column;margin-top:14px;">
-      <button class="save" onclick="closeModal('uploadChoice');document.getElementById('cameraInput').click()">&#128247; Take a photo</button>
-      <button class="cancel" onclick="closeModal('uploadChoice');document.getElementById('fileInput').click()">Choose from library / files</button>
+      <button class="save" onclick="closeModal('uploadChoice');scanMode=false;document.getElementById('cameraInput').click()">&#128247; Take a photo</button>
+      <button class="save" onclick="closeModal('uploadChoice');scanMode=true;document.getElementById('cameraInput').click()">&#128196; Scan a document</button>
+      <button class="cancel" onclick="closeModal('uploadChoice');scanMode=false;document.getElementById('fileInput').click()">Choose from library / files</button>
     </div>
+    <div class="storage-note" style="margin-top:12px;">Scan opens the camera and turns the page into a crisp black-and-white copy - you can crop and rotate it before saving.</div>
   </div>
 </div>
 
@@ -970,11 +1030,40 @@
   <div class="viewer-bar">
     <button onclick="closeViewer()">&#10005; Close</button>
     <div class="vb-group">
+      <button id="viewerEditBtn" onclick="editCurrentDoc()">Edit</button>
       <button onclick="downloadCurrentDoc()">Save</button>
       <button class="primary" onclick="shareCurrentDoc()">Share</button>
     </div>
   </div>
   <div class="viewer-body" id="viewerBody"></div>
+</div>
+
+<!-- Photo editor: crop, rotate, scan enhance -->
+<div class="editor" id="editor">
+  <div class="viewer-bar">
+    <button onclick="cancelEditor()">&#10005; Cancel</button>
+    <div class="vb-group">
+      <button class="primary" onclick="saveEditor()">Done</button>
+    </div>
+  </div>
+  <div class="editor-stage" id="editorStage">
+    <div class="editor-wrap">
+      <canvas id="editCanvas"></canvas>
+      <div class="crop-box" id="cropBox" onpointerdown="cropDown(event,'move')">
+        <div class="crop-handle nw" onpointerdown="cropDown(event,'nw')"></div>
+        <div class="crop-handle ne" onpointerdown="cropDown(event,'ne')"></div>
+        <div class="crop-handle sw" onpointerdown="cropDown(event,'sw')"></div>
+        <div class="crop-handle se" onpointerdown="cropDown(event,'se')"></div>
+      </div>
+    </div>
+  </div>
+  <div class="editor-hint">Drag the corners to crop, or drag the box to move it</div>
+  <div class="editor-tools">
+    <button onclick="rotateEditor(-1)">&#8634; Turn left</button>
+    <button onclick="rotateEditor(1)">&#8635; Turn right</button>
+    <button id="scanToggle" onclick="toggleScan()">&#128196; Scan B&amp;W</button>
+    <button onclick="resetEditor()">Reset</button>
+  </div>
 </div>
 
 <div class="update-banner" id="updateBanner" onclick="location.reload()">A new version is ready &mdash; tap to update</div>
@@ -1160,7 +1249,7 @@ let doctorIndex = -1, doctorOwner = null;
 let profileOwner = null;
 let petIndex = -1;
 let medIndex = -1, medOwner = null;
-let docIndex = -1, docCollection = 'docs', uploadTarget = null;
+let docIndex = -1, docCollection = 'docs', uploadTarget = null, scanMode = false;
 
 // ---------- helpers ----------
 function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
@@ -1608,8 +1697,9 @@ function compressImage(file) {
 async function handleFile(ev) {
   const file = ev.target.files[0];
   ev.target.value = '';
+  const scan = scanMode;
+  scanMode = false;
   if (!file) return;
-  let dataUrl, type;
   if (file.type === 'application/pdf') {
     const limit = fb ? 650 * 1024 : 3 * 1024 * 1024;
     if (file.size > limit) {
@@ -1618,12 +1708,15 @@ async function handleFile(ev) {
         : 'That PDF is over 3 MB. A photo or screenshot of it will save more reliably.');
       return;
     }
-    dataUrl = await readAsDataURL(file);
-    type = 'pdf';
-  } else {
-    try { dataUrl = await compressImage(file); } catch (e) { alert('Could not read that image.'); return; }
-    type = 'image';
+    saveNewFile(file.name, await readAsDataURL(file), 'pdf');
+    return;
   }
+  let dataUrl;
+  try { dataUrl = await compressImage(file); } catch (e) { alert('Could not read that image.'); return; }
+  // Every photo goes through the editor first - tap Done to keep it as-is
+  openEditor(dataUrl, { scan }, edited => saveNewFile(scan ? 'Scanned document' : file.name, edited, 'image'));
+}
+function saveNewFile(name, dataUrl, type) {
   if (fb && dataUrl.length > 950000) {
     alert('That file is too large to sync. Try a smaller photo or a screenshot.');
     return;
@@ -1631,7 +1724,7 @@ async function handleFile(ev) {
   const entry = {
     id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
     kind: docCollection === 'docs' ? 'doc' : 'petdoc',
-    name: file.name,
+    name,
     tag: '',
     type,
     data: dataUrl,
@@ -1661,6 +1754,7 @@ function openDoc(collection, i) {
       '<div style="color:rgba(255,255,255,0.55);font-size:0.75rem;font-weight:700;margin-top:10px;">Tip: press and hold the image to share or save it</div>' +
       '</div>';
   }
+  document.getElementById('viewerEditBtn').style.display = d.type === 'pdf' ? 'none' : '';
   document.getElementById('viewer').classList.add('open');
 }
 function closeViewer() {
@@ -1670,6 +1764,194 @@ function closeViewer() {
 }
 function shareCurrentDoc() { if (currentDoc) shareDoc(currentDoc.collection, currentDoc.i); }
 function downloadCurrentDoc() { if (currentDoc) downloadDoc(currentDoc.collection, currentDoc.i); }
+function editCurrentDoc() {
+  if (!currentDoc) return;
+  const { collection, i } = currentDoc;
+  const d = getDoc(collection, i);
+  if (!d || d.type === 'pdf') return;
+  openEditor(d.data, {}, edited => {
+    if (fb && edited.length > 950000) { alert('The edited photo is too large to sync. Try cropping it smaller.'); return; }
+    d.data = edited;
+    cacheLocal(collection);
+    if (fb) fb.setDoc(fb.fileRef(d.id), { data: d.data }, { merge: true }).catch(err => { console.error(err); setSync('error', err); toast('Edit failed to sync'); });
+    renderDocs(); renderPets();
+    if (currentDoc) openDoc(collection, i);
+    toast('Photo updated');
+  });
+}
+
+// ---------- photo editor (crop / rotate / scan enhance) ----------
+const SCAN_PREVIEW_CSS = 'grayscale(1) contrast(1.4) brightness(1.1)';
+let edit = null;      // {img, rot, scan, scale, crop:{x,y,w,h}, onSave}
+let cropDrag = null;
+
+function openEditor(src, opts, onSave) {
+  const img = new Image();
+  img.onload = () => {
+    edit = { img, rot: 0, scan: !!(opts && opts.scan), scale: 1, crop: null, onSave };
+    document.getElementById('editor').classList.add('open');
+    updateScanBtn();
+    requestAnimationFrame(() => editorDraw(true));
+  };
+  img.onerror = () => alert('Could not open that image for editing.');
+  img.src = src;
+}
+function cancelEditor() {
+  document.getElementById('editor').classList.remove('open');
+  edit = null;
+}
+function saveEditor() {
+  if (!edit) return;
+  let out;
+  try { out = editorExport(); } catch (e) { alert('Could not save the edited photo.'); return; }
+  const cb = edit.onSave;
+  cancelEditor();
+  cb(out);
+}
+function rotateEditor(dir) {
+  if (!edit) return;
+  edit.rot = (edit.rot + dir + 4) % 4;
+  editorDraw(true);
+}
+function resetEditor() {
+  if (!edit) return;
+  edit.rot = 0;
+  editorDraw(true);
+}
+function toggleScan() {
+  if (!edit) return;
+  edit.scan = !edit.scan;
+  updateScanBtn();
+  document.getElementById('editCanvas').style.filter = edit.scan ? SCAN_PREVIEW_CSS : '';
+}
+function updateScanBtn() {
+  document.getElementById('scanToggle').classList.toggle('on', !!(edit && edit.scan));
+}
+function editorDraw(resetCrop) {
+  if (!edit) return;
+  const stage = document.getElementById('editorStage');
+  const maxW = Math.max(60, stage.clientWidth - 40);
+  const maxH = Math.max(60, stage.clientHeight - 40);
+  const turned = edit.rot % 2 === 1;
+  const iw = turned ? edit.img.naturalHeight : edit.img.naturalWidth;
+  const ih = turned ? edit.img.naturalWidth : edit.img.naturalHeight;
+  const s = Math.min(maxW / iw, maxH / ih);
+  const w = Math.max(1, Math.round(iw * s)), h = Math.max(1, Math.round(ih * s));
+  const c = document.getElementById('editCanvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  ctx.save();
+  ctx.translate(w / 2, h / 2);
+  ctx.rotate(edit.rot * Math.PI / 2);
+  ctx.drawImage(edit.img, -(turned ? h : w) / 2, -(turned ? w : h) / 2, turned ? h : w, turned ? w : h);
+  ctx.restore();
+  c.style.filter = edit.scan ? SCAN_PREVIEW_CSS : '';
+  edit.scale = s;
+  if (resetCrop || !edit.crop) edit.crop = { x: 0, y: 0, w, h };
+  positionCropBox();
+}
+function positionCropBox() {
+  const b = document.getElementById('cropBox');
+  b.style.left = edit.crop.x + 'px';
+  b.style.top = edit.crop.y + 'px';
+  b.style.width = edit.crop.w + 'px';
+  b.style.height = edit.crop.h + 'px';
+}
+function cropDown(e, mode) {
+  if (!edit) return;
+  e.preventDefault();
+  e.stopPropagation();
+  cropDrag = { mode, x: e.clientX, y: e.clientY, start: Object.assign({}, edit.crop) };
+  window.addEventListener('pointermove', cropMove);
+  window.addEventListener('pointerup', cropUp);
+  window.addEventListener('pointercancel', cropUp);
+}
+function cropMove(e) {
+  if (!cropDrag || !edit) return;
+  e.preventDefault();
+  const dx = e.clientX - cropDrag.x, dy = e.clientY - cropDrag.y;
+  const c = document.getElementById('editCanvas');
+  const W = c.width, H = c.height, MIN = 40;
+  const s = cropDrag.start, m = cropDrag.mode;
+  let x1 = s.x, y1 = s.y, x2 = s.x + s.w, y2 = s.y + s.h;
+  if (m === 'move') {
+    x1 = Math.max(0, Math.min(W - s.w, s.x + dx));
+    y1 = Math.max(0, Math.min(H - s.h, s.y + dy));
+    x2 = x1 + s.w; y2 = y1 + s.h;
+  } else {
+    if (m.indexOf('w') !== -1) x1 = s.x + dx;
+    if (m.indexOf('e') !== -1) x2 = s.x + s.w + dx;
+    if (m.indexOf('n') !== -1) y1 = s.y + dy;
+    if (m.indexOf('s') !== -1) y2 = s.y + s.h + dy;
+    x2 = Math.max(MIN, Math.min(W, x2));
+    y2 = Math.max(MIN, Math.min(H, y2));
+    x1 = Math.max(0, Math.min(x2 - MIN, x1));
+    y1 = Math.max(0, Math.min(y2 - MIN, y1));
+  }
+  edit.crop = { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+  positionCropBox();
+}
+function cropUp() {
+  cropDrag = null;
+  window.removeEventListener('pointermove', cropMove);
+  window.removeEventListener('pointerup', cropUp);
+  window.removeEventListener('pointercancel', cropUp);
+}
+window.addEventListener('resize', () => { if (edit) editorDraw(true); });
+
+function editorExport() {
+  const turned = edit.rot % 2 === 1;
+  const nw = edit.img.naturalWidth, nh = edit.img.naturalHeight;
+  const rw = turned ? nh : nw, rh = turned ? nw : nh;
+  // full-size rotated copy of the photo
+  const off = document.createElement('canvas');
+  off.width = rw; off.height = rh;
+  const octx = off.getContext('2d');
+  octx.translate(rw / 2, rh / 2);
+  octx.rotate(edit.rot * Math.PI / 2);
+  octx.drawImage(edit.img, -nw / 2, -nh / 2);
+  // crop rectangle back in full-size coordinates
+  const s = edit.scale || 1;
+  let cx = edit.crop.x / s, cy = edit.crop.y / s;
+  let cw = edit.crop.w / s, ch = edit.crop.h / s;
+  cx = Math.max(0, Math.min(rw - 1, cx));
+  cy = Math.max(0, Math.min(rh - 1, cy));
+  cw = Math.max(1, Math.min(rw - cx, cw));
+  ch = Math.max(1, Math.min(rh - cy, ch));
+  const maxDim = 1400;
+  const outScale = Math.min(1, maxDim / Math.max(cw, ch));
+  const out = document.createElement('canvas');
+  out.width = Math.max(1, Math.round(cw * outScale));
+  out.height = Math.max(1, Math.round(ch * outScale));
+  const ctx = out.getContext('2d');
+  ctx.drawImage(off, cx, cy, cw, ch, 0, 0, out.width, out.height);
+  if (edit.scan) applyScanFilter(ctx, out.width, out.height);
+  return out.toDataURL('image/jpeg', 0.85);
+}
+// Grayscale + auto-contrast so a photographed page looks like a scan
+function applyScanFilter(ctx, w, h) {
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const px = imgData.data, n = px.length;
+  const hist = new Array(256).fill(0);
+  for (let i = 0; i < n; i += 4) {
+    const g = Math.round(0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]);
+    px[i] = g;
+    hist[g]++;
+  }
+  const total = n / 4;
+  let lo = 0, hi = 255, acc = 0;
+  for (let i = 0; i < 256; i++) { acc += hist[i]; if (acc >= total * 0.04) { lo = i; break; } }
+  acc = 0;
+  for (let i = 255; i >= 0; i--) { acc += hist[i]; if (acc >= total * 0.06) { hi = i; break; } }
+  if (hi - lo < 40) { lo = Math.max(0, lo - 20); hi = Math.min(255, hi + 20); }
+  const range = Math.max(1, hi - lo);
+  for (let i = 0; i < n; i += 4) {
+    let v = (px[i] - lo) * 255 / range;
+    v = v < 0 ? 0 : v > 255 ? 255 : Math.round(v);
+    px[i] = px[i + 1] = px[i + 2] = v;
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
 
 function dataURLtoBlob(dataurl) {
   const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1], bstr = atob(arr[1]);
@@ -1978,22 +2260,8 @@ async function enrollBio() {
     bioStore('eh_bio_cred', b64buf(cred.rawId));
     bioStore('eh_bio_key', PIN_HASH);
     renderBioButton();
-    renderBioSetupBtn();
     toast('Face ID unlock enabled on this device');
   } catch (e) { console.warn('Biometric enrollment cancelled/failed:', e && e.name); }
-}
-async function setupBio() {
-  try { localStorage.removeItem('eh_bio_declined'); } catch (e) {}
-  await enrollBio();
-  renderBioSetupBtn();
-}
-async function renderBioSetupBtn() {
-  const btn = document.getElementById('bioSetupBtn');
-  if (!btn) return;
-  if (!window.PublicKeyCredential || bioStored('eh_bio_cred')) { btn.style.display = 'none'; return; }
-  let available = false;
-  try { available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); } catch (e) {}
-  btn.style.display = available ? 'inline-block' : 'none';
 }
 async function maybeOfferBio() {
   if (bioStored('eh_bio_cred') || bioStored('eh_bio_declined')) return;
@@ -2079,7 +2347,6 @@ function unlockApp(hash) {
   HOUSEHOLD_ID = HID_BASE + '-' + hash.slice(0, 16);
   document.getElementById('lockScreen').classList.add('hidden');
   renderAll();
-  renderBioSetupBtn();
   initFirebase();
 }
 function lockNow() {
