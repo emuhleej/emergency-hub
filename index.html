@@ -15,10 +15,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --ink: #453741;
-    --paper: #f6f4f1;
+    --ink: #2f2530;
+    --paper: #f8f5f6;
     --card: #ffffff;
-    --line: #eee8ea;
+    --line: #ebe4e8;
     --muted: #8b7d85;
     --teal: #47938a;
     --teal-dark: #397b73;
@@ -27,38 +27,76 @@
     --plum: #584053;
     --plum-deep: #46333f;
     --plum-soft: #ece5ea;
+    --rose-soft: #f2e7ec;
+    --cream-soft: #f4eee4;
     --amber: #c4841f;
     --amber-mid: #fcbc66;
     --amber-soft: #fdf1dd;
     --coral: #e0592f;
     --coral-mid: #f97b4f;
     --coral-soft: #fdeae2;
-    --shadow: 0 2px 12px rgba(88,64,83,0.07);
-    --shadow-lift: 0 6px 24px rgba(88,64,83,0.12);
+    --shadow: 0 14px 36px rgba(88,64,83,0.08);
+    --shadow-lift: 0 22px 48px rgba(88,64,83,0.16);
     --r: 20px;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
+    outline: 3px solid rgba(141,198,191,0.9);
+    outline-offset: 3px;
+  }
   body {
     font-family: "Nunito Sans", -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--paper);
     color: var(--ink);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
-    padding-bottom: 70px;
+    padding-bottom: 42px;
   }
-  .wrap { max-width: 680px; margin: 0 auto; padding: 0 16px; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 18px; }
   h1, h2, .p-name, .cover-btn .t, .modal h3, .pet-name { font-family: "Fraunces", Georgia, serif; }
 
   /* ---------- Header ---------- */
   .top {
     background: linear-gradient(135deg, var(--plum) 0%, var(--plum-deep) 100%);
     color: #fff;
-    padding: 22px 0 20px;
-    margin-bottom: 20px;
-    border-radius: 0 0 28px 28px;
+    width: min(760px, calc(100% - 24px));
+    margin: 0 auto 18px;
+    padding: 20px 18px;
+    border-radius: 0 0 30px 30px;
+    box-shadow: 0 22px 46px rgba(70,51,63,0.22);
   }
-  .top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .top .wrap { max-width: none; padding: 0; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
   .top-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .brand-mark {
+    border: none;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    border-radius: 14px;
+    width: 44px; height: 44px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 1.55rem;
+    font-weight: 900;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .title-copy { min-width: 0; }
+  .top-subline { display: flex; align-items: center; gap: 8px; min-width: 0; margin-top: 1px; }
+  .top-subtitle { color: rgba(255,255,255,0.74); font-size: 0.8rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .top-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+  .top-icon {
+    border: none;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    border-radius: 14px;
+    min-width: 42px; height: 42px;
+    padding: 0 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.95rem;
+    font-weight: 900;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .top-icon.on { background: var(--amber-mid); color: var(--plum-deep); }
   .back-btn {
     display: none;
     border: none;
@@ -71,7 +109,7 @@
     flex-shrink: 0;
   }
   body.subpage .back-btn { display: block; }
-  .top h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .top h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.05; }
   @media (max-width: 400px) { .top h1 { font-size: 1.1rem; } }
   .top h1 em { font-style: normal; color: var(--teal-mid); }
   .edit-toggle {
@@ -89,14 +127,48 @@
   }
   .edit-toggle.on { background: var(--amber-mid); color: var(--plum-deep); }
   .sync-pill {
-    font-size: 0.58rem; font-weight: 800;
+    font-size: 0.58rem; font-weight: 900;
     letter-spacing: 0.05em; text-transform: uppercase;
-    padding: 4px 8px; border-radius: 999px;
+    padding: 3px 7px; border-radius: 999px;
     background: rgba(255,255,255,0.14); color: rgba(255,255,255,0.75);
     flex-shrink: 0;
   }
   .sync-pill.synced { background: rgba(141,198,191,0.28); color: #c8ebe5; }
   .sync-pill.error { background: rgba(249,123,79,0.3); color: #ffc9b3; }
+  .section-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(84px, 1fr));
+    gap: 10px;
+    margin: 4px auto 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .section-nav::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    border: none;
+    background: transparent;
+    color: #7c6c78;
+    border-radius: 16px;
+    min-height: 68px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-family: inherit;
+    font-size: 0.76rem;
+    font-weight: 900;
+    cursor: pointer;
+    transition: background 0.14s, color 0.14s, box-shadow 0.14s, transform 0.14s;
+  }
+  .nav-tab svg { width: 18px; height: 18px; }
+  .nav-tab.active {
+    background: #fff;
+    color: var(--plum);
+    box-shadow: var(--shadow);
+    transform: translateY(-1px);
+  }
+  .nav-tab.responder { min-width: 104px; }
 
   /* ---------- Pages ---------- */
   .page { display: none; }
@@ -105,24 +177,67 @@
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
   }
+  .page-hero {
+    background: rgba(255,255,255,0.86);
+    border: 1px solid rgba(88,64,83,0.08);
+    border-radius: 24px;
+    padding: 20px;
+    margin: 6px 0 18px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .page-hero h2 { font-size: 1.35rem; line-height: 1.1; font-weight: 700; color: var(--ink); }
+  .page-hero p { color: var(--muted); font-size: 0.9rem; font-weight: 650; margin-top: 5px; }
+  .hero-action {
+    border: none;
+    background: var(--teal);
+    color: #fff;
+    border-radius: 15px;
+    padding: 13px 18px;
+    min-height: 46px;
+    font-size: 0.92rem;
+    font-weight: 900;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 12px 24px rgba(71,147,138,0.2);
+    white-space: nowrap;
+  }
+  .hero-action.secondary { background: var(--plum); box-shadow: 0 12px 24px rgba(88,64,83,0.16); }
+  .filter-row { display: flex; flex-wrap: wrap; gap: 8px; margin: -2px 0 22px; }
+  .filter-pill {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: #776a75;
+    border-radius: 999px;
+    padding: 8px 13px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .filter-pill.active { background: var(--plum); color: #fff; border-color: var(--plum); }
 
   /* ---------- Cover ---------- */
   .cover-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 4px; }
   .cover-btn {
     border: none;
     background: var(--card);
-    border-radius: 24px;
-    padding: 28px 16px 24px;
+    border-radius: 22px;
+    padding: 22px 16px 20px;
     box-shadow: var(--shadow);
     cursor: pointer;
     text-align: center;
     font-family: inherit;
     transition: transform 0.12s, box-shadow 0.12s;
+    border: 1px solid rgba(88,64,83,0.06);
   }
   .cover-btn:active { transform: scale(0.97); box-shadow: var(--shadow-lift); }
   .cover-btn .ico {
-    width: 58px; height: 58px;
-    border-radius: 50%;
+    width: 54px; height: 54px;
+    border-radius: 18px;
     display: flex; align-items: center; justify-content: center;
     margin: 0 auto 14px;
   }
@@ -135,62 +250,64 @@
   .cover-btn .s { font-size: 0.76rem; color: var(--muted); margin-top: 4px; font-weight: 600; }
 
   /* ---------- Section bands ---------- */
-  .owner-band { display: flex; align-items: center; gap: 10px; margin: 26px 0 12px; }
+  .owner-band { display: flex; align-items: center; gap: 10px; margin: 28px 0 12px; }
   .owner-band:first-child, .page > .owner-band:first-of-type { margin-top: 6px; }
   .owner-chip {
-    font-size: 0.78rem; font-weight: 800;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    padding: 6px 16px; border-radius: 999px;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 1.08rem; font-weight: 700;
+    letter-spacing: 0; text-transform: none;
+    padding: 0; border-radius: 0;
   }
-  .owner-chip.em { background: var(--teal-soft); color: var(--teal); }
-  .owner-chip.hameed { background: var(--plum-soft); color: var(--plum); }
-  .owner-chip.pets { background: var(--amber-soft); color: var(--amber); }
-  .owner-band .rule { flex: 1; height: 1px; background: var(--line); }
+  .owner-chip.em, .owner-chip.hameed, .owner-chip.pets { background: transparent; color: var(--ink); }
+  .owner-band .rule { flex: 1; height: 1px; background: transparent; border-bottom: 1px solid rgba(88,64,83,0.08); }
   .sub-band { display: flex; align-items: center; justify-content: space-between; margin: 18px 0 8px; }
-  .sub-band h2 { font-size: 0.95rem; font-weight: 700; color: var(--ink); }
+  .sub-band h2 { font-family: "Fraunces", Georgia, serif; font-size: 1.02rem; font-weight: 700; color: var(--ink); }
 
   .search {
     width: 100%;
     border: none;
-    border-radius: 16px;
+    border-radius: 18px;
     padding: 14px 18px;
     font-size: 16px;
     font-family: inherit;
     background: var(--card);
     color: var(--ink);
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     box-shadow: var(--shadow);
+    border: 1px solid rgba(88,64,83,0.06);
   }
   .search:focus { outline: 2px solid var(--teal-mid); }
   .search::placeholder { color: var(--muted); }
 
   .add-btn {
-    display: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: none;
     background: var(--teal);
     color: #fff;
-    border-radius: 999px;
-    padding: 7px 16px;
+    border-radius: 13px;
+    padding: 9px 14px;
     font-size: 0.8rem;
-    font-weight: 800;
+    font-weight: 900;
     font-family: inherit;
     cursor: pointer;
   }
-  body.editing .add-btn { display: inline-block; }
 
   /* ---------- Cards ---------- */
   .card {
     background: var(--card);
-    border-radius: var(--r);
-    padding: 16px;
-    margin-bottom: 10px;
+    border-radius: 22px;
+    padding: 17px;
+    margin-bottom: 12px;
     box-shadow: var(--shadow);
+    border: 1px solid rgba(88,64,83,0.06);
   }
   .c-top { display: flex; align-items: center; gap: 12px; }
   .avatar {
     flex-shrink: 0;
-    width: 44px; height: 44px;
-    border-radius: 50%;
+    width: 46px; height: 46px;
+    border-radius: 16px;
     background: var(--teal-soft);
     color: var(--teal);
     font-weight: 800;
@@ -222,7 +339,7 @@
     transition: transform 0.1s;
   }
   .act:active { transform: scale(0.95); }
-  .act.call { background: var(--teal); color: #fff; }
+  .act.call { background: var(--plum); color: #fff; }
   .act.text { background: var(--teal-soft); color: var(--teal-dark); }
   .act.copy { background: var(--paper); color: var(--muted); padding: 0; width: 42px; }
   .act svg { width: 15px; height: 15px; }
@@ -310,39 +427,107 @@
   .share-pet svg { width: 14px; height: 14px; }
 
   /* ---------- Documents ---------- */
-  .docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-bottom: 16px; }
   .docs-grid.in-card { margin: 8px 0 0; }
   .doc-tile {
     background: var(--card);
-    border-radius: 18px;
+    border-radius: 22px;
     overflow: hidden;
     position: relative;
     box-shadow: var(--shadow);
+    border: 1px solid rgba(88,64,83,0.07);
   }
   .in-card .doc-tile { background: var(--paper); box-shadow: none; }
-  .doc-tile img { width: 100%; height: 90px; object-fit: cover; display: block; }
-  .doc-tile .pdf-face {
-    height: 90px; display: flex; align-items: center; justify-content: center;
-    background: var(--amber-soft); color: var(--amber);
-    font-weight: 800; font-size: 0.85rem; letter-spacing: 0.08em;
+  .doc-preview {
+    min-height: 150px;
+    background: linear-gradient(90deg, var(--teal-soft) 0 20%, var(--rose-soft) 20% 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 44px 18px 70px;
+    position: relative;
   }
-  .doc-tile .doc-label { font-size: 0.74rem; padding: 8px 10px 2px; font-weight: 800; word-break: break-word; }
-  .doc-tile .doc-tag { font-size: 0.64rem; color: var(--muted); padding: 0 10px 6px; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 800; }
-  .doc-foot { display: flex; gap: 6px; padding: 4px 8px 10px; }
+  .doc-tile.pdf .doc-preview { background: linear-gradient(90deg, var(--teal-soft) 0 18%, var(--rose-soft) 18% 100%); }
+  .doc-tile.image .doc-preview { background: linear-gradient(90deg, var(--teal-soft) 0 18%, var(--plum-soft) 18% 100%); }
+  .doc-kind {
+    position: absolute;
+    top: 11px; left: 11px;
+    background: #fff;
+    color: #4a4148;
+    border-radius: 11px;
+    padding: 6px 10px;
+    font-size: 0.68rem;
+    line-height: 1;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+  }
+  .doc-menu {
+    position: absolute;
+    top: 10px; right: 10px;
+    border: none;
+    width: 34px; height: 34px;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--ink);
+    font-size: 1rem;
+    font-weight: 900;
+    cursor: pointer;
+  }
+  .doc-tile img {
+    width: 100%;
+    max-height: 120px;
+    object-fit: cover;
+    display: block;
+    border-radius: 10px;
+    box-shadow: 0 12px 28px rgba(69,55,65,0.12);
+  }
+  .doc-tile .pdf-face {
+    width: 100%;
+    min-height: 116px;
+    border-radius: 10px;
+    background: #fff;
+    color: var(--plum);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    padding: 18px;
+    box-shadow: 0 12px 28px rgba(69,55,65,0.12);
+  }
+  .pdf-face .pdf-line { display: block; height: 5px; border-radius: 999px; background: #d6cbd2; }
+  .pdf-face .pdf-line.strong { width: 48%; background: #bd607a; }
+  .pdf-face .pdf-line.short { width: 72%; }
+  .pdf-face .pdf-block { width: 34%; height: 18px; border-radius: 5px; background: var(--plum); margin-top: 2px; }
+  .doc-body { padding: 14px 13px 14px; }
+  .doc-tile .doc-label { font-family: "Fraunces", Georgia, serif; font-size: 1.02rem; line-height: 1.15; padding: 0; font-weight: 700; word-break: break-word; }
+  .doc-meta-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; color: var(--muted); font-size: 0.74rem; font-weight: 700; }
+  .doc-tile .doc-tag {
+    display: inline-flex;
+    align-items: center;
+    background: var(--teal-soft);
+    color: var(--teal-dark);
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 0.68rem;
+    font-weight: 900;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .doc-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 0 0; }
   .doc-foot button {
     flex: 1;
     border: none;
-    background: var(--teal-soft);
-    color: var(--teal-dark);
-    border-radius: 8px;
-    padding: 7px 0;
-    font-size: 0.72rem;
-    font-weight: 800;
+    background: var(--plum);
+    color: #fff;
+    border-radius: 12px;
+    padding: 10px 0;
+    font-size: 0.78rem;
+    font-weight: 900;
     font-family: inherit;
     cursor: pointer;
   }
-  .doc-foot button.view { background: var(--paper); color: var(--muted); }
-  .in-card .doc-foot button.view { background: #fff; }
+  .doc-foot button.secondary { background: var(--paper); color: var(--plum); }
+  .in-card .doc-foot button.view { background: #fff; color: var(--plum); }
   .doc-manage { display: none; gap: 6px; padding: 0 8px 10px; }
   body.editing .doc-manage { display: flex; }
   .doc-manage button {
@@ -458,13 +643,13 @@
 
   .upload-tile {
     border: 1.5px dashed var(--teal-mid);
-    border-radius: 18px;
-    min-height: 128px;
+    border-radius: 22px;
+    min-height: 168px;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
     color: var(--muted); font-size: 0.76rem; font-weight: 800;
     font-family: inherit;
     cursor: pointer;
-    background: transparent;
+    background: rgba(255,255,255,0.54);
   }
   .upload-tile .plus { font-size: 1.5rem; color: var(--teal); line-height: 1; }
   .upload-tile:active { background: var(--teal-soft); }
@@ -666,6 +851,49 @@
   }
   .signin-error { color: var(--amber-mid); font-size: 0.82rem; font-weight: 700; min-height: 1.2em; }
 
+  @media (min-width: 720px) {
+    #contacts-Em, #contacts-Hameed, #contacts-Vets, #doctors-Em, #doctors-Hameed {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    #contacts-Em .card, #contacts-Hameed .card, #contacts-Vets .card, #doctors-Em .card, #doctors-Hameed .card { margin-bottom: 0; }
+  }
+  @media (max-width: 620px) {
+    body { padding-bottom: 28px; }
+    .wrap { padding: 0 14px; }
+    .top { width: 100%; border-radius: 0 0 24px 24px; padding: 16px 14px; margin-bottom: 12px; }
+    .brand-mark { width: 40px; height: 40px; border-radius: 13px; }
+    .back-btn { width: 38px; height: 38px; }
+    .top h1 { font-size: 1.08rem; }
+    .top-subtitle { font-size: 0.72rem; }
+    .top-icon { min-width: 38px; height: 38px; padding: 0 9px; }
+    .section-nav { grid-template-columns: repeat(5, 86px); gap: 8px; padding-bottom: 4px; margin-bottom: 12px; }
+    .nav-tab { min-height: 62px; font-size: 0.7rem; }
+    .page-hero { align-items: flex-start; padding: 18px; border-radius: 22px; }
+    .page-hero h2 { font-size: 1.18rem; }
+    .page-hero p { font-size: 0.82rem; }
+    .hero-action { padding: 11px 13px; min-height: 42px; }
+    .docs-grid { grid-template-columns: 1fr; }
+    .doc-preview { min-height: 138px; padding: 22px 42px 16px 60px; }
+    .cover-grid { gap: 12px; }
+    .cover-btn { padding: 18px 12px 16px; }
+  }
+  @media (max-width: 430px) {
+    .top .wrap { gap: 8px; }
+    .top-left { gap: 8px; }
+    .top-actions { gap: 6px; }
+    .brand-mark { display: none; }
+    body.subpage .brand-mark { display: inline-flex; }
+    body.subpage .back-btn { display: none; }
+    .sync-pill { display: none; }
+    .page-hero { flex-direction: column; }
+    .hero-action { width: 100%; }
+    .cover-grid { grid-template-columns: 1fr; }
+    .cover-btn.c-responder { grid-column: auto; }
+    .backup-row { flex-direction: column; }
+  }
+
   #printSheet { display: none; }
   @media print {
     body * { visibility: hidden; }
@@ -789,21 +1017,58 @@
 <div class="top">
   <div class="wrap">
     <div class="top-left">
-      <button class="back-btn" onclick="showPage('home')">&#8592;</button>
-      <h1 id="pageTitle">Emergency <em>Hub</em></h1>
-      <span class="sync-pill" id="syncPill" onclick="explainSync()" style="cursor:pointer;">Local</span>
+      <button class="brand-mark" onclick="showPage('home')" aria-label="Home">+</button>
+      <button class="back-btn" onclick="showPage('home')" aria-label="Back to home">&#8592;</button>
+      <div class="title-copy">
+        <h1 id="pageTitle">Emergency <em>Hub</em></h1>
+        <div class="top-subline">
+          <span class="top-subtitle" id="pageSubtitle">Household essentials</span>
+          <span class="sync-pill" id="syncPill" onclick="explainSync()" style="cursor:pointer;">Local</span>
+        </div>
+      </div>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <button class="edit-toggle" onclick="lockNow()" aria-label="Lock" style="padding:8px 13px;">&#128274;</button>
-      <button class="edit-toggle" id="editToggle" onclick="toggleEdit()">Edit</button>
+    <div class="top-actions">
+      <button class="top-icon" onclick="focusSearch()" aria-label="Search contacts" title="Search contacts">&#128269;</button>
+      <button class="top-icon" onclick="lockNow()" aria-label="Lock" title="Lock">&#128274;</button>
+      <button class="top-icon" id="editToggle" onclick="toggleEdit()" aria-label="Edit entries" title="Edit entries">&#9998;</button>
     </div>
   </div>
 </div>
+
+<nav class="section-nav wrap" aria-label="Hub sections">
+  <button class="nav-tab" data-page="contacts" onclick="showPage('contacts')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"/></svg>
+    <span>Contacts</span>
+  </button>
+  <button class="nav-tab" data-page="medical" onclick="showPage('medical')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.3 10.6 20C5.4 15.3 2 12.2 2 8.4 2 5.3 4.4 3 7.5 3c1.7 0 3.4.8 4.5 2.1C13.1 3.8 14.8 3 16.5 3 19.6 3 22 5.3 22 8.4c0 3.8-3.4 6.9-8.6 11.6L12 21.3z"/></svg>
+    <span>Medical</span>
+  </button>
+  <button class="nav-tab" data-page="docs" onclick="showPage('docs')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h9l5 5v15H6V2zm8 1.5V8h4.5L14 3.5zM8.5 12h9v1.8h-9V12zm0 4h9v1.8h-9V16z"/></svg>
+    <span>Documents</span>
+  </button>
+  <button class="nav-tab" data-page="pets" onclick="showPage('pets')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="10" r="2.2"/><circle cx="9.2" cy="5.8" r="2.4"/><circle cx="14.8" cy="5.8" r="2.4"/><circle cx="19" cy="10" r="2.2"/><path d="M12 10c-2.6 0-5.6 3-5.6 5.6 0 1.9 1.4 3 3.1 3 .9 0 1.7-.5 2.5-.5s1.6.5 2.5.5c1.7 0 3.1-1.1 3.1-3C17.6 13 14.6 10 12 10z"/></svg>
+    <span>Pets</span>
+  </button>
+  <button class="nav-tab responder" data-page="responder" onclick="showPage('responder')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 3 7v2h18V7l-9-5zm-7 9v8H3v2h18v-2h-2v-8h-3v8h-3v-8h-2v8H8v-8H5z"/></svg>
+    <span>Responder</span>
+  </button>
+</nav>
 
 <div class="wrap">
 
   <!-- COVER -->
   <div class="page active" id="page-home">
+    <div class="page-hero">
+      <div>
+        <h2>Household dashboard</h2>
+        <p>Contacts, medical notes, documents, pets, and first responder info in one place.</p>
+      </div>
+      <button class="hero-action secondary" onclick="toggleEdit()">Manage</button>
+    </div>
     <div class="cover-grid">
       <button class="cover-btn c-contacts" onclick="showPage('contacts')">
         <div class="ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"/></svg></div>
@@ -840,9 +1105,16 @@
 
   <!-- CONTACTS -->
   <div class="page" id="page-contacts">
-    <input class="search" id="searchBox" placeholder="Search contacts…" oninput="renderContacts()">
+    <div class="page-hero">
+      <div>
+        <h2>Quick contacts</h2>
+        <p>People, clinics, work lines, and emergency numbers ready to call or text.</p>
+      </div>
+      <button class="hero-action" onclick="openContactForm('Em')">+ Add</button>
+    </div>
+    <input class="search" id="searchBox" placeholder="Search contacts..." oninput="renderContacts()">
     <div class="owner-band">
-      <span class="owner-chip em">Em</span>
+      <span class="owner-chip em">Emily</span>
       <span class="rule"></span>
       <button class="add-btn" onclick="openContactForm('Em')">+ Add</button>
     </div>
@@ -857,13 +1129,20 @@
 
   <!-- MEDICAL -->
   <div class="page" id="page-medical">
+    <div class="page-hero">
+      <div>
+        <h2>Medical overview</h2>
+        <p>Profiles, allergies, medications, doctors, and details that need to be easy to scan.</p>
+      </div>
+      <button class="hero-action" onclick="openMedForm('Em','Em')">+ Add med</button>
+    </div>
     <div class="owner-band">
-      <span class="owner-chip em">Em</span>
+      <span class="owner-chip em">Emily</span>
       <span class="rule"></span>
     </div>
     <div id="medical-Em"></div>
     <div class="sub-band">
-      <h2>Em's Doctors</h2>
+      <h2>Emily's Doctors</h2>
       <button class="add-btn" onclick="openDoctorForm('Em')">+ Add doctor</button>
     </div>
     <div id="doctors-Em"></div>
@@ -881,25 +1160,47 @@
 
   <!-- DOCUMENTS -->
   <div class="page" id="page-docs">
+    <div class="page-hero">
+      <div>
+        <h2>Important documents</h2>
+        <p>Insurance cards, IDs, records, and policies, ready when needed.</p>
+      </div>
+      <button class="hero-action" onclick="pickFile('docs','Em')">+ Add</button>
+    </div>
+    <div class="filter-row" aria-label="Document filters">
+      <button class="filter-pill active" data-filter="all" onclick="setDocFilter('all')">All</button>
+      <button class="filter-pill" data-filter="insurance" onclick="setDocFilter('insurance')">Insurance</button>
+      <button class="filter-pill" data-filter="medical" onclick="setDocFilter('medical')">Medical</button>
+      <button class="filter-pill" data-filter="legal" onclick="setDocFilter('legal')">Legal</button>
+      <button class="filter-pill" data-filter="pet" onclick="setDocFilter('pet')">Pet</button>
+      <button class="filter-pill" data-filter="other" onclick="setDocFilter('other')">Other</button>
+    </div>
     <div class="owner-band">
-      <span class="owner-chip em">Em</span>
+      <span class="owner-chip em">Emily</span>
       <span class="rule"></span>
     </div>
     <div class="docs-grid" id="docs-Em"></div>
-    <div class="notes-k">Em — policy numbers &amp; notes</div>
-    <textarea class="notes-box" id="notes-Em" placeholder="Policy numbers, member IDs, group numbers…" onchange="saveNotes('Em')"></textarea>
+    <div class="notes-k">Emily - policy numbers &amp; notes</div>
+    <textarea class="notes-box" id="notes-Em" placeholder="Policy numbers, member IDs, group numbers..." onchange="saveNotes('Em')"></textarea>
     <div class="owner-band">
       <span class="owner-chip hameed">Hameed</span>
       <span class="rule"></span>
     </div>
     <div class="docs-grid" id="docs-Hameed"></div>
-    <div class="notes-k">Hameed — policy numbers &amp; notes</div>
-    <textarea class="notes-box" id="notes-Hameed" placeholder="Policy numbers, member IDs, group numbers…" onchange="saveNotes('Hameed')"></textarea>
+    <div class="notes-k">Hameed - policy numbers &amp; notes</div>
+    <textarea class="notes-box" id="notes-Hameed" placeholder="Policy numbers, member IDs, group numbers..." onchange="saveNotes('Hameed')"></textarea>
     <div class="storage-note">Saved on this device in this browser. Screenshots of cards upload fastest. Add them once on each phone.</div>
   </div>
 
   <!-- PETS -->
   <div class="page" id="page-pets">
+    <div class="page-hero">
+      <div>
+        <h2>Pets</h2>
+        <p>Vet numbers, allergies, medications, vaccine records, and shareable pet summaries.</p>
+      </div>
+      <button class="hero-action" onclick="openPetForm()">+ Add pet</button>
+    </div>
     <div class="owner-band">
       <span class="owner-chip pets">Vet Contacts</span>
       <span class="rule"></span>
@@ -917,6 +1218,13 @@
 
   <!-- FIRST RESPONDER -->
   <div class="page" id="page-responder">
+    <div class="page-hero">
+      <div>
+        <h2>First responder card</h2>
+        <p>Address and emergency contacts that can be shown from the lock screen.</p>
+      </div>
+      <button class="hero-action" onclick="openResponderForm()">Edit card</button>
+    </div>
     <div class="owner-band">
       <span class="owner-chip em" style="background:var(--coral-soft);color:var(--coral);">If Emergency Crews Arrive</span>
       <span class="rule"></span>
@@ -939,7 +1247,7 @@
     <label>Relationship / role</label><input id="f-rel" placeholder="e.g. Mother, Charge nurse, Emergency vet">
     <label>Phone</label><input id="f-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="e.g. 865-555-0123">
     <label>Phone label (optional)</label><input id="f-phone-label" placeholder="e.g. Cell, Main line, After hours">
-    <label>Notes (optional)</label><textarea id="f-notes" placeholder="Address, hours, account #…"></textarea>
+    <label>Notes (optional)</label><textarea id="f-notes" placeholder="Address, hours, account #..."></textarea>
     <div class="btns">
       <button class="cancel" onclick="closeModal('formModal')">Cancel</button>
       <button class="save" onclick="saveContact()">Save</button>
@@ -957,7 +1265,7 @@
     <div class="m-section">Contact information</div>
     <label>Office phone</label><input id="dr-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="e.g. 865-555-0123">
     <label>Practice / location (optional)</label><input id="dr-office" placeholder="e.g. Covenant Medical Group, Powell">
-    <label>Notes (optional)</label><textarea id="dr-notes" placeholder="Portal login hint, referral needed, preferred pharmacy…"></textarea>
+    <label>Notes (optional)</label><textarea id="dr-notes" placeholder="Portal login hint, referral needed, preferred pharmacy..."></textarea>
     <div class="btns">
       <button class="cancel" onclick="closeModal('doctorModal')">Cancel</button>
       <button class="save" onclick="saveDoctor()">Save</button>
@@ -971,7 +1279,7 @@
     <h3 id="profileTitle">Edit profile</h3>
     <label>Date of birth (optional)</label><input id="p-dob" inputmode="numeric" placeholder="MM/DD/YYYY">
     <label>Blood type (optional)</label><input id="p-blood" placeholder="e.g. O+">
-    <label>Allergies</label><textarea id="p-allergies" placeholder="e.g. Penicillin — hives. Write None if none."></textarea>
+    <label>Allergies</label><textarea id="p-allergies" placeholder="e.g. Penicillin - hives. Write None if none."></textarea>
     <label>Conditions (optional)</label><textarea id="p-conditions" placeholder="e.g. Hypertension, asthma"></textarea>
     <label>Other notes (optional)</label><textarea id="p-notes" placeholder="e.g. Preferred hospital"></textarea>
     <div class="btns">
@@ -1017,7 +1325,7 @@
 <div class="modal-bg" id="docModal">
   <div class="modal">
     <h3>Rename document</h3>
-    <label>Name</label><input id="d-name" placeholder="e.g. BCBS card — front">
+    <label>Name</label><input id="d-name" placeholder="e.g. BCBS card - front">
     <label>Tag (optional)</label><input id="d-tag" placeholder="e.g. Health, Dental, Rabies 2026">
     <div class="btns">
       <button class="cancel" onclick="closeModal('docModal')">Cancel</button>
@@ -1294,6 +1602,7 @@ async function googleSignIn() {
 async function initFirebase() {
   if (fb) return;
   if (!configLooksReal()) { setSync('local'); return; }
+  if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') { setSync('local'); return; }
   try {
     const { appM, fsM, auM } = await loadFirebaseModules();
     const app = await getFirebaseApp(appM);
@@ -1415,20 +1724,43 @@ const MSG_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-
 const COPY_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
 const SHARE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.1c-.8 0-1.5.3-2 .8l-7.1-4.2c.1-.2.1-.5.1-.7s0-.5-.1-.7L16 7.2c.5.5 1.2.8 2 .8 1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3c0 .2 0 .5.1.7L8 9.8C7.5 9.3 6.8 9 6 9c-1.7 0-3 1.3-3 3s1.3 3 3 3c.8 0 1.5-.3 2-.8l7.1 4.2c-.1.2-.1.4-.1.6 0 1.6 1.3 2.9 3 2.9s3-1.3 3-2.9-1.3-2.9-3-2.9z"/></svg>';
 
-const PAGE_TITLES = { home:'Emergency <em>Hub</em>', contacts:'Contacts', medical:'Medical', docs:'Documents', pets:'Pets', responder:'First Responder' };
+const PAGE_META = {
+  home: { title:'Emergency <em>Hub</em>', subtitle:'Household essentials' },
+  contacts: { title:'Emergency <em>Hub</em>', subtitle:'People and phone numbers' },
+  medical: { title:'Emergency <em>Hub</em>', subtitle:'Medical profiles' },
+  docs: { title:'Emergency <em>Hub</em>', subtitle:'Household documents' },
+  pets: { title:'Emergency <em>Hub</em>', subtitle:'Pet care records' },
+  responder: { title:'Emergency <em>Hub</em>', subtitle:'First responder card' }
+};
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
-  document.getElementById('pageTitle').innerHTML = PAGE_TITLES[name];
+  const meta = PAGE_META[name] || PAGE_META.home;
+  document.getElementById('pageTitle').innerHTML = meta.title;
+  const sub = document.getElementById('pageSubtitle');
+  if (sub) sub.textContent = meta.subtitle;
+  document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.page === name));
   document.body.classList.toggle('subpage', name !== 'home');
+  document.body.dataset.page = name;
   window.scrollTo(0, 0);
+}
+
+function focusSearch() {
+  showPage('contacts');
+  setTimeout(() => {
+    const q = document.getElementById('searchBox');
+    if (q) q.focus();
+  }, 60);
 }
 
 function toggleEdit() {
   editing = !editing;
   document.body.classList.toggle('editing', editing);
   const btn = document.getElementById('editToggle');
-  btn.textContent = editing ? 'Done' : 'Edit';
+  btn.textContent = editing ? 'Done' : '\u270e';
+  btn.title = editing ? 'Done editing' : 'Edit entries';
+  btn.setAttribute('aria-label', editing ? 'Done editing' : 'Edit entries');
+  btn.setAttribute('aria-pressed', editing ? 'true' : 'false');
   btn.classList.toggle('on', editing);
 }
 
@@ -1655,21 +1987,51 @@ function delPet(i) {
   data.pets.splice(i, 1); persist('pets'); renderPets();
 }
 
+let docFilter = 'all';
+function setDocFilter(filter) {
+  docFilter = filter || 'all';
+  document.querySelectorAll('.filter-pill').forEach(btn => btn.classList.toggle('active', btn.dataset.filter === docFilter));
+  renderDocs();
+}
+function docCategory(d) {
+  const raw = [d.name, d.tag].join(' ').toLowerCase();
+  if (raw.match(/insurance|policy|bcbs|card|member|group/)) return 'insurance';
+  if (raw.match(/medical|medication|health|doctor|rx|vaccine|record|lab/)) return 'medical';
+  if (raw.match(/legal|id|license|passport|birth|lease|deed|will/)) return 'legal';
+  if (raw.match(/pet|vet|rabies|vaccine|bia/)) return 'pet';
+  return 'other';
+}
+function docMatchesFilter(d) { return docFilter === 'all' || docCategory(d) === docFilter; }
+function docUpdatedLabel(d) {
+  if (!d.createdAt) return 'Saved';
+  const dt = new Date(d.createdAt);
+  if (Number.isNaN(dt.getTime())) return 'Saved';
+  const today = new Date();
+  if (dt.toDateString() === today.toDateString()) return 'Updated today';
+  return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
 function docTile(d, i, collection) {
-  const face = d.type === 'pdf' ? '<div class="pdf-face">PDF</div>' : '<img src="' + d.data + '" alt="' + esc(d.name) + '">';
-  return '<div class="doc-tile">' + face +
-    '<div class="doc-label">' + esc(d.name) + '</div>' +
-    (d.tag ? '<div class="doc-tag">' + esc(d.tag) + '</div>' : '') +
+  const kind = d.type === 'pdf' ? 'PDF' : 'IMAGE';
+  const tag = d.tag || docCategory(d).replace(/^\w/, c => c.toUpperCase());
+  const face = d.type === 'pdf'
+    ? '<div class="pdf-face"><span class="pdf-line strong"></span><span class="pdf-line"></span><span class="pdf-line short"></span><span class="pdf-block"></span></div>'
+    : '<img src="' + d.data + '" alt="' + esc(d.name) + '">';
+  return '<div class="doc-tile ' + (d.type === 'pdf' ? 'pdf' : 'image') + '">' +
+    '<div class="doc-preview"><span class="doc-kind">' + kind + '</span>' +
+    '<button class="doc-menu" onclick="openDocMeta(\'' + collection + '\',' + i + ')" aria-label="Document details">...</button>' +
+    face + '</div>' +
+    '<div class="doc-body"><div class="doc-label">' + esc(d.name) + '</div>' +
+    '<div class="doc-meta-row"><span class="doc-tag">' + esc(tag) + '</span><span>' + esc(docUpdatedLabel(d)) + '</span></div>' +
     '<div class="doc-foot"><button class="view" onclick="openDoc(\'' + collection + '\',' + i + ')">View</button>' +
-    '<button onclick="shareDoc(\'' + collection + '\',' + i + ')">Share</button></div>' +
-    '<div class="doc-manage"><button onclick="openDocMeta(\'' + collection + '\',' + i + ')">Rename</button>' +
-    '<button class="d" onclick="delDoc(\'' + collection + '\',' + i + ')">Delete</button></div></div>';
+    '<button class="secondary" onclick="shareDoc(\'' + collection + '\',' + i + ')">Share</button></div>' +
+    '<div class="doc-manage"><button onclick="openDocMeta(\'' + collection + '\',' + i + ')">Details</button>' +
+    '<button class="d" onclick="delDoc(\'' + collection + '\',' + i + ')">Delete</button></div></div></div>';
 }
 function renderDocs() {
   PEOPLE.forEach(owner => {
     const grid = document.getElementById('docs-' + owner);
     if (!grid) return;
-    const tiles = data.docs.map((d, i) => ({ d, i })).filter(x => x.d.owner === owner).map(({ d, i }) => docTile(d, i, 'docs'));
+    const tiles = data.docs.map((d, i) => ({ d, i })).filter(x => x.d.owner === owner && docMatchesFilter(x.d)).map(({ d, i }) => docTile(d, i, 'docs'));
     tiles.push('<button class="upload-tile" onclick="pickFile(\'docs\',\'' + owner + '\')"><span class="plus">+</span>Add photo or PDF</button>');
     grid.innerHTML = tiles.join('');
   });
