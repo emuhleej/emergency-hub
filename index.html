@@ -97,6 +97,7 @@
     cursor: pointer;
   }
   .top-icon.on { background: var(--amber-mid); color: var(--plum-deep); }
+  body:not(.subpage) #editToggle { display: none; }
   .back-btn {
     display: none;
     border: none;
@@ -428,6 +429,28 @@
 
   /* ---------- Documents ---------- */
   .docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .docs-stack { display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px; }
+  .doc-side-section {
+    background: rgba(255,255,255,0.48);
+    border: 1px solid rgba(88,64,83,0.06);
+    border-radius: 22px;
+    padding: 12px;
+  }
+  .doc-side-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 0 2px 10px;
+  }
+  .doc-side-title {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .doc-side-count { color: var(--muted); font-size: 0.74rem; font-weight: 800; }
+  .doc-side-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
   .docs-grid.in-card { margin: 8px 0 0; }
   .doc-tile {
     background: var(--card);
@@ -512,6 +535,16 @@
     font-weight: 900;
     text-transform: none;
     letter-spacing: 0;
+  }
+  .doc-side-chip {
+    display: inline-flex;
+    align-items: center;
+    background: var(--plum-soft);
+    color: var(--plum);
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 0.68rem;
+    font-weight: 900;
   }
   .doc-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 0 0; }
   .doc-foot button {
@@ -721,6 +754,19 @@
   }
   .save { background: var(--teal); color: #fff; }
   .cancel { background: var(--paper); color: var(--muted); }
+  .side-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+  .side-option {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--muted);
+    border-radius: 13px;
+    padding: 11px 8px;
+    font-size: 0.82rem;
+    font-weight: 900;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .side-option.active { background: var(--plum); border-color: var(--plum); color: #fff; }
 
   .empty { color: var(--muted); font-size: 0.85rem; padding: 6px 4px; font-weight: 600; }
   input[type="file"] { display: none; }
@@ -875,6 +921,7 @@
     .page-hero p { font-size: 0.82rem; }
     .hero-action { padding: 11px 13px; min-height: 42px; }
     .docs-grid { grid-template-columns: 1fr; }
+    .doc-side-grid { grid-template-columns: 1fr; }
     .doc-preview { min-height: 138px; padding: 22px 42px 16px 60px; }
     .cover-grid { gap: 12px; }
     .cover-btn { padding: 18px 12px 16px; }
@@ -1062,13 +1109,6 @@
 
   <!-- COVER -->
   <div class="page active" id="page-home">
-    <div class="page-hero">
-      <div>
-        <h2>Household dashboard</h2>
-        <p>Contacts, medical notes, documents, pets, and first responder info in one place.</p>
-      </div>
-      <button class="hero-action secondary" onclick="toggleEdit()">Manage</button>
-    </div>
     <div class="cover-grid">
       <button class="cover-btn c-contacts" onclick="showPage('contacts')">
         <div class="ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"/></svg></div>
@@ -1179,14 +1219,14 @@
       <span class="owner-chip em">Emily</span>
       <span class="rule"></span>
     </div>
-    <div class="docs-grid" id="docs-Em"></div>
+    <div class="docs-stack" id="docs-Em"></div>
     <div class="notes-k">Emily - policy numbers &amp; notes</div>
     <textarea class="notes-box" id="notes-Em" placeholder="Policy numbers, member IDs, group numbers..." onchange="saveNotes('Em')"></textarea>
     <div class="owner-band">
       <span class="owner-chip hameed">Hameed</span>
       <span class="rule"></span>
     </div>
-    <div class="docs-grid" id="docs-Hameed"></div>
+    <div class="docs-stack" id="docs-Hameed"></div>
     <div class="notes-k">Hameed - policy numbers &amp; notes</div>
     <textarea class="notes-box" id="notes-Hameed" placeholder="Policy numbers, member IDs, group numbers..." onchange="saveNotes('Hameed')"></textarea>
     <div class="storage-note">Saved on this device in this browser. Screenshots of cards upload fastest. Add them once on each phone.</div>
@@ -1324,9 +1364,16 @@
 <!-- Doc rename form -->
 <div class="modal-bg" id="docModal">
   <div class="modal">
-    <h3>Rename document</h3>
+    <h3>Document details</h3>
     <label>Name</label><input id="d-name" placeholder="e.g. BCBS card - front">
     <label>Tag (optional)</label><input id="d-tag" placeholder="e.g. Health, Dental, Rabies 2026">
+    <label>Side</label>
+    <div class="side-options" role="group" aria-label="Document side">
+      <button class="side-option" id="d-side-front" type="button" onclick="setDocSide('front')">Front</button>
+      <button class="side-option" id="d-side-back" type="button" onclick="setDocSide('back')">Back</button>
+      <button class="side-option" id="d-side-other" type="button" onclick="setDocSide('other')">Other</button>
+    </div>
+    <input id="d-side" type="hidden" value="other">
     <div class="btns">
       <button class="cancel" onclick="closeModal('docModal')">Cancel</button>
       <button class="save" onclick="saveDocMeta()">Save</button>
@@ -1687,7 +1734,7 @@ let doctorIndex = -1, doctorOwner = null;
 let profileOwner = null;
 let petIndex = -1;
 let medIndex = -1, medOwner = null;
-let docIndex = -1, docCollection = 'docs', uploadTarget = null, scanMode = false;
+let docIndex = -1, docCollection = 'docs', uploadTarget = null, uploadSide = 'other', scanMode = false;
 
 function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 function jsq(s) { return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
@@ -2002,6 +2049,27 @@ function docCategory(d) {
   return 'other';
 }
 function docMatchesFilter(d) { return docFilter === 'all' || docCategory(d) === docFilter; }
+function docSide(d) {
+  const explicit = String(d.side || '').toLowerCase();
+  if (explicit === 'front' || explicit === 'back') return explicit;
+  const raw = [d.name, d.tag].join(' ').toLowerCase();
+  if (raw.match(/\bfront\b/)) return 'front';
+  if (raw.match(/\bback\b/)) return 'back';
+  return 'other';
+}
+function docSideLabel(d) {
+  const side = docSide(d);
+  return side === 'front' ? 'Front' : side === 'back' ? 'Back' : 'Other';
+}
+function setDocSide(side) {
+  const next = side === 'front' || side === 'back' ? side : 'other';
+  const input = document.getElementById('d-side');
+  if (input) input.value = next;
+  ['front', 'back', 'other'].forEach(s => {
+    const btn = document.getElementById('d-side-' + s);
+    if (btn) btn.classList.toggle('active', s === next);
+  });
+}
 function docUpdatedLabel(d) {
   if (!d.createdAt) return 'Saved';
   const dt = new Date(d.createdAt);
@@ -2013,6 +2081,7 @@ function docUpdatedLabel(d) {
 function docTile(d, i, collection) {
   const kind = d.type === 'pdf' ? 'PDF' : 'IMAGE';
   const tag = d.tag || docCategory(d).replace(/^\w/, c => c.toUpperCase());
+  const sideChip = collection === 'docs' ? ' <span class="doc-side-chip">' + esc(docSideLabel(d)) + '</span>' : '';
   const face = d.type === 'pdf'
     ? '<div class="pdf-face"><span class="pdf-line strong"></span><span class="pdf-line"></span><span class="pdf-line short"></span><span class="pdf-block"></span></div>'
     : '<img src="' + d.data + '" alt="' + esc(d.name) + '">';
@@ -2021,22 +2090,35 @@ function docTile(d, i, collection) {
     '<button class="doc-menu" onclick="openDocMeta(\'' + collection + '\',' + i + ')" aria-label="Document details">...</button>' +
     face + '</div>' +
     '<div class="doc-body"><div class="doc-label">' + esc(d.name) + '</div>' +
-    '<div class="doc-meta-row"><span class="doc-tag">' + esc(tag) + '</span><span>' + esc(docUpdatedLabel(d)) + '</span></div>' +
+    '<div class="doc-meta-row"><span><span class="doc-tag">' + esc(tag) + '</span>' + sideChip + '</span><span>' + esc(docUpdatedLabel(d)) + '</span></div>' +
     '<div class="doc-foot"><button class="view" onclick="openDoc(\'' + collection + '\',' + i + ')">View</button>' +
     '<button class="secondary" onclick="shareDoc(\'' + collection + '\',' + i + ')">Share</button></div>' +
     '<div class="doc-manage"><button onclick="openDocMeta(\'' + collection + '\',' + i + ')">Details</button>' +
     '<button class="d" onclick="delDoc(\'' + collection + '\',' + i + ')">Delete</button></div></div></div>';
 }
+function docSideSection(owner, title, side, items) {
+  const uploadText = side === 'front' ? 'Add front' : side === 'back' ? 'Add back' : 'Add other';
+  const tiles = items.map(({ d, i }) => docTile(d, i, 'docs'));
+  tiles.push('<button class="upload-tile" onclick="pickFile(\'docs\',\'' + owner + '\',\'' + side + '\')"><span class="plus">+</span>' + uploadText + '</button>');
+  return '<section class="doc-side-section"><div class="doc-side-head"><span class="doc-side-title">' + title + '</span><span class="doc-side-count">' + items.length + ' saved</span></div><div class="doc-side-grid">' + tiles.join('') + '</div></section>';
+}
 function renderDocs() {
   PEOPLE.forEach(owner => {
     const grid = document.getElementById('docs-' + owner);
     if (!grid) return;
-    const tiles = data.docs.map((d, i) => ({ d, i })).filter(x => x.d.owner === owner && docMatchesFilter(x.d)).map(({ d, i }) => docTile(d, i, 'docs'));
-    tiles.push('<button class="upload-tile" onclick="pickFile(\'docs\',\'' + owner + '\')"><span class="plus">+</span>Add photo or PDF</button>');
-    grid.innerHTML = tiles.join('');
+    const items = data.docs.map((d, i) => ({ d, i })).filter(x => x.d.owner === owner && docMatchesFilter(x.d));
+    const front = items.filter(x => docSide(x.d) === 'front');
+    const back = items.filter(x => docSide(x.d) === 'back');
+    const other = items.filter(x => docSide(x.d) === 'other');
+    const sections = [
+      docSideSection(owner, 'Front', 'front', front),
+      docSideSection(owner, 'Back', 'back', back)
+    ];
+    if (other.length || docFilter !== 'all') sections.push(docSideSection(owner, 'Other', 'other', other));
+    grid.innerHTML = sections.join('');
   });
 }
-function pickFile(collection, target) { docCollection = collection; uploadTarget = target; openModal('uploadChoice'); }
+function pickFile(collection, target, side = 'other') { docCollection = collection; uploadTarget = target; uploadSide = side || 'other'; openModal('uploadChoice'); }
 function readAsDataURL(file) {
   return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file); });
 }
@@ -2073,7 +2155,7 @@ async function handleFile(ev) {
 }
 function saveNewFile(name, dataUrl, type) {
   if (fb && dataUrl.length > 950000) { alert('That file is too large to sync. Try a smaller photo or a screenshot.'); return; }
-  const entry = { id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), kind: docCollection === 'docs' ? 'doc' : 'petdoc', name, tag: '', type, data: dataUrl, createdAt: Date.now() };
+  const entry = { id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), kind: docCollection === 'docs' ? 'doc' : 'petdoc', name, tag: '', side: uploadSide || 'other', type, data: dataUrl, createdAt: Date.now() };
   if (entry.kind === 'doc') entry.owner = uploadTarget; else entry.petId = uploadTarget;
   (entry.kind === 'petdoc' ? data.petdocs : data.docs).push(entry);
   cacheLocal(entry.kind === 'petdoc' ? 'petdocs' : 'docs');
@@ -2229,10 +2311,20 @@ async function sharePetSummary(petId) {
   if (navigator.share) { try { await navigator.share({ title: p.name + ' - pet info', text }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
   copyNum(text); toast('Copied ' + p.name + '\u2019s info');
 }
-function openDocMeta(collection, i) { docCollection = collection; docIndex = i; const d = getDoc(collection, i); document.getElementById('d-name').value = d.name; document.getElementById('d-tag').value = d.tag || ''; openModal('docModal'); }
+function openDocMeta(collection, i) {
+  docCollection = collection; docIndex = i;
+  const d = getDoc(collection, i);
+  document.getElementById('d-name').value = d.name;
+  document.getElementById('d-tag').value = d.tag || '';
+  setDocSide(docSide(d));
+  openModal('docModal');
+}
 function saveDocMeta() {
-  const d = getDoc(docCollection, docIndex); d.name = document.getElementById('d-name').value.trim() || d.name; d.tag = document.getElementById('d-tag').value.trim();
-  cacheLocal(docCollection); if (fb) fb.setDoc(fb.fileRef(d.id), { name: d.name, tag: d.tag }, { merge: true }).catch(err => { console.error(err); setSync('error', err); });
+  const d = getDoc(docCollection, docIndex);
+  d.name = document.getElementById('d-name').value.trim() || d.name;
+  d.tag = document.getElementById('d-tag').value.trim();
+  d.side = document.getElementById('d-side').value || 'other';
+  cacheLocal(docCollection); if (fb) fb.setDoc(fb.fileRef(d.id), { name: d.name, tag: d.tag, side: d.side }, { merge: true }).catch(err => { console.error(err); setSync('error', err); });
   renderDocs(); renderPets(); closeModal('docModal');
 }
 function delDoc(collection, i) {
