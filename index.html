@@ -429,28 +429,6 @@
 
   /* ---------- Documents ---------- */
   .docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-bottom: 16px; }
-  .docs-stack { display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px; }
-  .doc-side-section {
-    background: rgba(255,255,255,0.48);
-    border: 1px solid rgba(88,64,83,0.06);
-    border-radius: 22px;
-    padding: 12px;
-  }
-  .doc-side-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 0 2px 10px;
-  }
-  .doc-side-title {
-    font-family: "Fraunces", Georgia, serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--ink);
-  }
-  .doc-side-count { color: var(--muted); font-size: 0.74rem; font-weight: 800; }
-  .doc-side-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
   .docs-grid.in-card { margin: 8px 0 0; }
   .doc-tile {
     background: var(--card);
@@ -536,15 +514,39 @@
     text-transform: none;
     letter-spacing: 0;
   }
-  .doc-side-chip {
+  .doc-side-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .doc-status-chip {
     display: inline-flex;
     align-items: center;
-    background: var(--plum-soft);
-    color: var(--plum);
     border-radius: 999px;
-    padding: 4px 8px;
+    padding: 5px 9px;
+    background: var(--teal-soft);
+    color: var(--teal-dark);
     font-size: 0.68rem;
     font-weight: 900;
+  }
+  .doc-status-chip.missing {
+    background: var(--rose-soft);
+    color: var(--plum);
+  }
+  .doc-placeholder {
+    width: 100%;
+    min-height: 116px;
+    border: 1.5px dashed rgba(88,64,83,0.18);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.62);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-align: center;
   }
   .doc-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 0 0; }
   .doc-foot button {
@@ -560,6 +562,7 @@
     cursor: pointer;
   }
   .doc-foot button.secondary { background: var(--paper); color: var(--plum); }
+  .doc-foot button.add-side { background: var(--teal-soft); color: var(--teal-dark); }
   .in-card .doc-foot button.view { background: #fff; color: var(--plum); }
   .doc-manage { display: none; gap: 6px; padding: 0 8px 10px; }
   body.editing .doc-manage { display: flex; }
@@ -754,20 +757,6 @@
   }
   .save { background: var(--teal); color: #fff; }
   .cancel { background: var(--paper); color: var(--muted); }
-  .side-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
-  .side-option {
-    border: 1px solid var(--line);
-    background: var(--paper);
-    color: var(--muted);
-    border-radius: 13px;
-    padding: 11px 8px;
-    font-size: 0.82rem;
-    font-weight: 900;
-    font-family: inherit;
-    cursor: pointer;
-  }
-  .side-option.active { background: var(--plum); border-color: var(--plum); color: #fff; }
-
   .empty { color: var(--muted); font-size: 0.85rem; padding: 6px 4px; font-weight: 600; }
   input[type="file"] { display: none; }
   .toast {
@@ -921,7 +910,6 @@
     .page-hero p { font-size: 0.82rem; }
     .hero-action { padding: 11px 13px; min-height: 42px; }
     .docs-grid { grid-template-columns: 1fr; }
-    .doc-side-grid { grid-template-columns: 1fr; }
     .doc-preview { min-height: 138px; padding: 22px 42px 16px 60px; }
     .cover-grid { gap: 12px; }
     .cover-btn { padding: 18px 12px 16px; }
@@ -1205,7 +1193,7 @@
         <h2>Important documents</h2>
         <p>Insurance cards, IDs, records, and policies, ready when needed.</p>
       </div>
-      <button class="hero-action" onclick="pickFile('docs','Em')">+ Add</button>
+      <button class="hero-action" onclick="pickFile('docs','Em','front')">+ Add</button>
     </div>
     <div class="filter-row" aria-label="Document filters">
       <button class="filter-pill active" data-filter="all" onclick="setDocFilter('all')">All</button>
@@ -1219,14 +1207,14 @@
       <span class="owner-chip em">Emily</span>
       <span class="rule"></span>
     </div>
-    <div class="docs-stack" id="docs-Em"></div>
+    <div class="docs-grid" id="docs-Em"></div>
     <div class="notes-k">Emily - policy numbers &amp; notes</div>
     <textarea class="notes-box" id="notes-Em" placeholder="Policy numbers, member IDs, group numbers..." onchange="saveNotes('Em')"></textarea>
     <div class="owner-band">
       <span class="owner-chip hameed">Hameed</span>
       <span class="rule"></span>
     </div>
-    <div class="docs-stack" id="docs-Hameed"></div>
+    <div class="docs-grid" id="docs-Hameed"></div>
     <div class="notes-k">Hameed - policy numbers &amp; notes</div>
     <textarea class="notes-box" id="notes-Hameed" placeholder="Policy numbers, member IDs, group numbers..." onchange="saveNotes('Hameed')"></textarea>
     <div class="storage-note">Saved on this device in this browser. Screenshots of cards upload fastest. Add them once on each phone.</div>
@@ -1365,15 +1353,9 @@
 <div class="modal-bg" id="docModal">
   <div class="modal">
     <h3>Document details</h3>
-    <label>Name</label><input id="d-name" placeholder="e.g. BCBS card - front">
+    <label>Name</label><input id="d-name" placeholder="e.g. BCBS Health Insurance">
     <label>Tag (optional)</label><input id="d-tag" placeholder="e.g. Health, Dental, Rabies 2026">
-    <label>Side</label>
-    <div class="side-options" role="group" aria-label="Document side">
-      <button class="side-option" id="d-side-front" type="button" onclick="setDocSide('front')">Front</button>
-      <button class="side-option" id="d-side-back" type="button" onclick="setDocSide('back')">Back</button>
-      <button class="side-option" id="d-side-other" type="button" onclick="setDocSide('other')">Other</button>
-    </div>
-    <input id="d-side" type="hidden" value="other">
+    <div class="storage-note">Use the document card to add or view the front and back.</div>
     <div class="btns">
       <button class="cancel" onclick="closeModal('docModal')">Cancel</button>
       <button class="save" onclick="saveDocMeta()">Save</button>
@@ -1734,7 +1716,7 @@ let doctorIndex = -1, doctorOwner = null;
 let profileOwner = null;
 let petIndex = -1;
 let medIndex = -1, medOwner = null;
-let docIndex = -1, docCollection = 'docs', uploadTarget = null, uploadSide = 'other', scanMode = false;
+let docIndex = -1, docCollection = 'docs', uploadTarget = null, uploadSide = 'front', uploadDocIndex = -1, scanMode = false;
 
 function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 function jsq(s) { return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
@@ -2049,76 +2031,111 @@ function docCategory(d) {
   return 'other';
 }
 function docMatchesFilter(d) { return docFilter === 'all' || docCategory(d) === docFilter; }
+function normalizeDocSide(side) {
+  return String(side || '').toLowerCase() === 'back' ? 'back' : 'front';
+}
 function docSide(d) {
   const explicit = String(d.side || '').toLowerCase();
   if (explicit === 'front' || explicit === 'back') return explicit;
   const raw = [d.name, d.tag].join(' ').toLowerCase();
-  if (raw.match(/\bfront\b/)) return 'front';
   if (raw.match(/\bback\b/)) return 'back';
-  return 'other';
+  return 'front';
 }
-function docSideLabel(d) {
-  const side = docSide(d);
-  return side === 'front' ? 'Front' : side === 'back' ? 'Back' : 'Other';
+function docBaseFile(d) {
+  if (!d || !d.data) return null;
+  return { data: d.data, type: d.type || 'image', name: d.name || 'Document', updatedAt: d.frontUpdatedAt || d.createdAt };
 }
-function setDocSide(side) {
-  const next = side === 'front' || side === 'back' ? side : 'other';
-  const input = document.getElementById('d-side');
-  if (input) input.value = next;
-  ['front', 'back', 'other'].forEach(s => {
-    const btn = document.getElementById('d-side-' + s);
-    if (btn) btn.classList.toggle('active', s === next);
-  });
+function docSideFile(d, side) {
+  const next = normalizeDocSide(side);
+  if (next === 'back') {
+    if (d.backData) return { data: d.backData, type: d.backType || 'image', name: d.backName || ((d.name || 'Document') + ' - back'), updatedAt: d.backUpdatedAt || d.createdAt };
+    if (docSide(d) === 'back') return docBaseFile(d);
+    return null;
+  }
+  if (d.frontData) return { data: d.frontData, type: d.frontType || d.type || 'image', name: d.frontName || d.name || 'Document', updatedAt: d.frontUpdatedAt || d.createdAt };
+  if (docSide(d) === 'back' && !d.frontData) return null;
+  return docBaseFile(d);
 }
-function docUpdatedLabel(d) {
-  if (!d.createdAt) return 'Saved';
-  const dt = new Date(d.createdAt);
+function docHasSide(d, side) {
+  return !!docSideFile(d, side);
+}
+function docFace(file, missingText) {
+  if (!file) return '<div class="doc-placeholder">' + esc(missingText || 'Upload needed') + '</div>';
+  return file.type === 'pdf'
+    ? '<div class="pdf-face"><span class="pdf-line strong"></span><span class="pdf-line"></span><span class="pdf-line short"></span><span class="pdf-block"></span></div>'
+    : '<img src="' + file.data + '" alt="' + esc(file.name) + '">';
+}
+function docFileUpdatedLabel(file) {
+  if (!file || !file.updatedAt) return 'Saved';
+  const dt = new Date(file.updatedAt);
   if (Number.isNaN(dt.getTime())) return 'Saved';
   const today = new Date();
   if (dt.toDateString() === today.toDateString()) return 'Updated today';
   return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
-function docTile(d, i, collection) {
-  const kind = d.type === 'pdf' ? 'PDF' : 'IMAGE';
-  const tag = d.tag || docCategory(d).replace(/^\w/, c => c.toUpperCase());
-  const sideChip = collection === 'docs' ? ' <span class="doc-side-chip">' + esc(docSideLabel(d)) + '</span>' : '';
-  const face = d.type === 'pdf'
-    ? '<div class="pdf-face"><span class="pdf-line strong"></span><span class="pdf-line"></span><span class="pdf-line short"></span><span class="pdf-block"></span></div>'
-    : '<img src="' + d.data + '" alt="' + esc(d.name) + '">';
-  return '<div class="doc-tile ' + (d.type === 'pdf' ? 'pdf' : 'image') + '">' +
-    '<div class="doc-preview"><span class="doc-kind">' + kind + '</span>' +
-    '<button class="doc-menu" onclick="openDocMeta(\'' + collection + '\',' + i + ')" aria-label="Document details">...</button>' +
-    face + '</div>' +
-    '<div class="doc-body"><div class="doc-label">' + esc(d.name) + '</div>' +
-    '<div class="doc-meta-row"><span><span class="doc-tag">' + esc(tag) + '</span>' + sideChip + '</span><span>' + esc(docUpdatedLabel(d)) + '</span></div>' +
-    '<div class="doc-foot"><button class="view" onclick="openDoc(\'' + collection + '\',' + i + ')">View</button>' +
-    '<button class="secondary" onclick="shareDoc(\'' + collection + '\',' + i + ')">Share</button></div>' +
-    '<div class="doc-manage"><button onclick="openDocMeta(\'' + collection + '\',' + i + ')">Details</button>' +
-    '<button class="d" onclick="delDoc(\'' + collection + '\',' + i + ')">Delete</button></div></div></div>';
+function docUpdatedLabel(d) {
+  const front = docSideFile(d, 'front');
+  const back = docSideFile(d, 'back');
+  const latest = Math.max(front && front.updatedAt ? front.updatedAt : 0, back && back.updatedAt ? back.updatedAt : 0);
+  return docFileUpdatedLabel({ updatedAt: latest || d.createdAt });
 }
-function docSideSection(owner, title, side, items) {
-  const uploadText = side === 'front' ? 'Add front' : side === 'back' ? 'Add back' : 'Add other';
-  const tiles = items.map(({ d, i }) => docTile(d, i, 'docs'));
-  tiles.push('<button class="upload-tile" onclick="pickFile(\'docs\',\'' + owner + '\',\'' + side + '\')"><span class="plus">+</span>' + uploadText + '</button>');
-  return '<section class="doc-side-section"><div class="doc-side-head"><span class="doc-side-title">' + title + '</span><span class="doc-side-count">' + items.length + ' saved</span></div><div class="doc-side-grid">' + tiles.join('') + '</div></section>';
+function docTile(d, i, collection) {
+  if (collection !== 'docs') {
+    const petFile = docBaseFile(d);
+    const petKind = petFile && petFile.type === 'pdf' ? 'PDF' : 'IMAGE';
+    const petTag = d.tag || docCategory(d).replace(/^\w/, c => c.toUpperCase());
+    return '<div class="doc-tile ' + (petFile && petFile.type === 'pdf' ? 'pdf' : 'image') + '">' +
+      '<div class="doc-preview"><span class="doc-kind">' + petKind + '</span>' +
+      '<button class="doc-menu" onclick="openDocMeta(\'' + collection + '\',' + i + ')" aria-label="Document details">...</button>' +
+      docFace(petFile, 'Upload needed') + '</div>' +
+      '<div class="doc-body"><div class="doc-label">' + esc(d.name) + '</div>' +
+      '<div class="doc-meta-row"><span><span class="doc-tag">' + esc(petTag) + '</span></span><span>' + esc(docUpdatedLabel(d)) + '</span></div>' +
+      '<div class="doc-foot"><button class="view" onclick="openDoc(\'' + collection + '\',' + i + ')">View</button>' +
+      '<button class="secondary" onclick="shareDoc(\'' + collection + '\',' + i + ')">Share</button></div>' +
+      '<div class="doc-manage"><button onclick="openDocMeta(\'' + collection + '\',' + i + ')">Details</button>' +
+      '<button class="d" onclick="delDoc(\'' + collection + '\',' + i + ')">Delete</button></div></div></div>';
+  }
+  const front = docSideFile(d, 'front');
+  const back = docSideFile(d, 'back');
+  const primary = front || back;
+  const kind = primary && primary.type === 'pdf' ? 'PDF' : 'IMAGE';
+  const tag = d.tag || docCategory(d).replace(/^\w/, c => c.toUpperCase());
+  const owner = jsq(d.owner || uploadTarget || 'Em');
+  const frontButton = front
+    ? '<button class="view" onclick="openDoc(\'docs\',' + i + ',\'front\')">View front</button>'
+    : '<button class="add-side" onclick="pickFile(\'docs\',\'' + owner + '\',\'front\',' + i + ')">+ Front</button>';
+  const backButton = back
+    ? '<button class="secondary" onclick="openDoc(\'docs\',' + i + ',\'back\')">View back</button>'
+    : '<button class="add-side" onclick="pickFile(\'docs\',\'' + owner + '\',\'back\',' + i + ')">+ Back</button>';
+  return '<div class="doc-tile ' + (primary && primary.type === 'pdf' ? 'pdf' : 'image') + '">' +
+    '<div class="doc-preview"><span class="doc-kind">' + kind + '</span>' +
+    '<button class="doc-menu" onclick="openDocMeta(\'docs\',' + i + ')" aria-label="Document details">...</button>' +
+    docFace(primary, 'Front needed') + '</div>' +
+    '<div class="doc-body"><div class="doc-label">' + esc(d.name) + '</div>' +
+    '<div class="doc-meta-row"><span><span class="doc-tag">' + esc(tag) + '</span></span><span>' + esc(docUpdatedLabel(d)) + '</span></div>' +
+    '<div class="doc-side-status"><span class="doc-status-chip' + (front ? '' : ' missing') + '">' + (front ? 'Front saved' : 'Front needed') + '</span>' +
+    '<span class="doc-status-chip' + (back ? '' : ' missing') + '">' + (back ? 'Back saved' : 'Back needed') + '</span></div>' +
+    '<div class="doc-foot">' + frontButton + backButton + '</div>' +
+    '<div class="doc-manage"><button onclick="openDocMeta(\'docs\',' + i + ')">Details</button>' +
+    '<button class="d" onclick="delDoc(\'docs\',' + i + ')">Delete</button></div></div></div>';
 }
 function renderDocs() {
   PEOPLE.forEach(owner => {
     const grid = document.getElementById('docs-' + owner);
     if (!grid) return;
     const items = data.docs.map((d, i) => ({ d, i })).filter(x => x.d.owner === owner && docMatchesFilter(x.d));
-    const front = items.filter(x => docSide(x.d) === 'front');
-    const back = items.filter(x => docSide(x.d) === 'back');
-    const other = items.filter(x => docSide(x.d) === 'other');
-    const sections = [
-      docSideSection(owner, 'Front', 'front', front),
-      docSideSection(owner, 'Back', 'back', back)
-    ];
-    if (other.length || docFilter !== 'all') sections.push(docSideSection(owner, 'Other', 'other', other));
-    grid.innerHTML = sections.join('');
+    const tiles = items.map(({ d, i }) => docTile(d, i, 'docs'));
+    tiles.push('<button class="upload-tile" onclick="pickFile(\'docs\',\'' + owner + '\',\'front\')"><span class="plus">+</span>Add document</button>');
+    grid.innerHTML = tiles.join('');
   });
 }
-function pickFile(collection, target, side = 'other') { docCollection = collection; uploadTarget = target; uploadSide = side || 'other'; openModal('uploadChoice'); }
+function pickFile(collection, target, side = 'front', existingIndex = -1) {
+  docCollection = collection;
+  uploadTarget = target;
+  uploadSide = normalizeDocSide(side);
+  uploadDocIndex = Number.isInteger(existingIndex) ? existingIndex : -1;
+  openModal('uploadChoice');
+}
 function readAsDataURL(file) {
   return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file); });
 }
@@ -2155,37 +2172,84 @@ async function handleFile(ev) {
 }
 function saveNewFile(name, dataUrl, type) {
   if (fb && dataUrl.length > 950000) { alert('That file is too large to sync. Try a smaller photo or a screenshot.'); return; }
-  const entry = { id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), kind: docCollection === 'docs' ? 'doc' : 'petdoc', name, tag: '', side: uploadSide || 'other', type, data: dataUrl, createdAt: Date.now() };
+  if (docCollection === 'docs' && uploadDocIndex >= 0) {
+    const d = data.docs[uploadDocIndex];
+    if (!d) { alert('Could not find that document. Please try again.'); return; }
+    const side = normalizeDocSide(uploadSide);
+    const next = Object.assign({}, d);
+    if (side === 'back') {
+      next.backData = dataUrl;
+      next.backType = type;
+      next.backName = name;
+      next.backUpdatedAt = Date.now();
+    } else {
+      if (docSide(d) === 'back' && !d.backData && d.data) {
+        next.backData = d.data;
+        next.backType = d.type || 'image';
+        next.backName = d.name || 'Document back';
+        next.backUpdatedAt = d.createdAt || Date.now();
+      }
+      next.data = dataUrl;
+      next.type = type;
+      next.frontName = name;
+      next.frontUpdatedAt = Date.now();
+      next.side = 'front';
+      if (!next.name || docSide(d) === 'back') next.name = name.replace(/\s*[-:]?\s*front\b/i, '').trim() || name;
+    }
+    if (fb && JSON.stringify(next).length > 950000) { alert('Together, the front and back are too large to sync. Try a smaller photo or screenshot.'); return; }
+    Object.assign(d, next);
+    cacheLocal('docs');
+    if (fb) fb.setDoc(fb.fileRef(d.id), d, { merge: true }).catch(err => { console.error(err); setSync('error', err); toast('Upload failed to sync'); });
+    uploadDocIndex = -1;
+    renderDocs(); renderPets(); toast(side === 'back' ? 'Back added' : 'Front updated');
+    return;
+  }
+  const entry = { id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), kind: docCollection === 'docs' ? 'doc' : 'petdoc', name, tag: '', side: normalizeDocSide(uploadSide), type, data: dataUrl, createdAt: Date.now() };
   if (entry.kind === 'doc') entry.owner = uploadTarget; else entry.petId = uploadTarget;
   (entry.kind === 'petdoc' ? data.petdocs : data.docs).push(entry);
   cacheLocal(entry.kind === 'petdoc' ? 'petdocs' : 'docs');
   if (fb) fb.setDoc(fb.fileRef(entry.id), entry).catch(err => { console.error(err); setSync('error', err); toast('Upload failed to sync'); });
+  uploadDocIndex = -1;
   renderDocs(); renderPets();
 }
 function getDoc(collection, i) { return collection === 'docs' ? data.docs[i] : data.petdocs[i]; }
+function getDocFile(collection, i, side = 'front') {
+  const d = getDoc(collection, i);
+  if (!d) return null;
+  return collection === 'docs' ? docSideFile(d, side) : docBaseFile(d);
+}
 
 let currentDoc = null;
-function openDoc(collection, i) {
-  currentDoc = { collection, i };
+function openDoc(collection, i, side = 'front') {
   const d = getDoc(collection, i);
+  const file = getDocFile(collection, i, side);
+  if (!file) { toast(normalizeDocSide(side) === 'back' ? 'No back uploaded yet' : 'No front uploaded yet'); return; }
+  currentDoc = { collection, i, side: normalizeDocSide(side) };
   const body = document.getElementById('viewerBody');
-  if (d.type === 'pdf') { body.innerHTML = '<iframe src="' + d.data + '"></iframe>'; }
-  else { body.innerHTML = '<div style="text-align:center;max-height:100%;"><img src="' + d.data + '" alt="' + esc(d.name) + '"><div style="color:rgba(255,255,255,0.55);font-size:0.75rem;font-weight:700;margin-top:10px;">Tip: press and hold the image to share or save it</div></div>'; }
-  document.getElementById('viewerEditBtn').style.display = d.type === 'pdf' ? 'none' : '';
+  if (file.type === 'pdf') { body.innerHTML = '<iframe src="' + file.data + '"></iframe>'; }
+  else { body.innerHTML = '<div style="text-align:center;max-height:100%;"><img src="' + file.data + '" alt="' + esc(file.name || d.name) + '"><div style="color:rgba(255,255,255,0.55);font-size:0.75rem;font-weight:700;margin-top:10px;">Tip: press and hold the image to share or save it</div></div>'; }
+  document.getElementById('viewerEditBtn').style.display = file.type === 'pdf' ? 'none' : '';
   document.getElementById('viewer').classList.add('open');
 }
 function closeViewer() { document.getElementById('viewer').classList.remove('open'); document.getElementById('viewerBody').innerHTML = ''; currentDoc = null; }
-function shareCurrentDoc() { if (currentDoc) shareDoc(currentDoc.collection, currentDoc.i); }
-function downloadCurrentDoc() { if (currentDoc) downloadDoc(currentDoc.collection, currentDoc.i); }
+function shareCurrentDoc() { if (currentDoc) shareDoc(currentDoc.collection, currentDoc.i, currentDoc.side); }
+function downloadCurrentDoc() { if (currentDoc) downloadDoc(currentDoc.collection, currentDoc.i, currentDoc.side); }
 function editCurrentDoc() {
   if (!currentDoc) return;
-  const { collection, i } = currentDoc; const d = getDoc(collection, i);
-  if (!d || d.type === 'pdf') return;
-  openEditor(d.data, {}, edited => {
+  const { collection, i, side } = currentDoc; const d = getDoc(collection, i); const file = getDocFile(collection, i, side);
+  if (!d || !file || file.type === 'pdf') return;
+  openEditor(file.data, {}, edited => {
     if (fb && edited.length > 950000) { alert('The edited photo is too large to sync.'); return; }
-    d.data = edited; cacheLocal(collection);
-    if (fb) fb.setDoc(fb.fileRef(d.id), { data: d.data }, { merge: true }).catch(err => { console.error(err); setSync('error', err); toast('Edit failed to sync'); });
-    renderDocs(); renderPets(); if (currentDoc) openDoc(collection, i); toast('Photo updated');
+    if (collection === 'docs' && normalizeDocSide(side) === 'back' && d.backData) {
+      d.backData = edited;
+      d.backUpdatedAt = Date.now();
+    } else {
+      d.data = edited;
+      if (collection === 'docs') d.frontUpdatedAt = Date.now();
+    }
+    cacheLocal(collection);
+    if (fb) fb.setDoc(fb.fileRef(d.id), d, { merge: true }).catch(err => { console.error(err); setSync('error', err); toast('Edit failed to sync'); });
+    renderDocs(); renderPets(); if (currentDoc) openDoc(collection, i, side); toast('Photo updated');
   });
 }
 
@@ -2284,18 +2348,22 @@ function dataURLtoBlob(dataurl) {
   while (n--) u8[n] = bstr.charCodeAt(n);
   return new Blob([u8], { type: mime });
 }
-function docFileName(d, blob) { const ext = d.type === 'pdf' ? '.pdf' : (blob.type.includes('png') ? '.png' : '.jpg'); return d.name.includes('.') ? d.name : d.name + ext; }
-function downloadDoc(collection, i) {
-  const d = getDoc(collection, i); const blob = dataURLtoBlob(d.data);
+function docFileName(file, blob) { const ext = file.type === 'pdf' ? '.pdf' : (blob.type.includes('png') ? '.png' : '.jpg'); return file.name.includes('.') ? file.name : file.name + ext; }
+function downloadDoc(collection, i, side = 'front') {
+  const file = getDocFile(collection, i, side);
+  if (!file) { toast(normalizeDocSide(side) === 'back' ? 'No back uploaded yet' : 'No front uploaded yet'); return; }
+  const blob = dataURLtoBlob(file.data);
   const url = URL.createObjectURL(blob); const a = document.createElement('a');
-  a.href = url; a.download = docFileName(d, blob); document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  a.href = url; a.download = docFileName(file, blob); document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 4000); toast('Saved - share it from your Photos or Files app');
 }
-async function shareDoc(collection, i) {
-  const d = getDoc(collection, i); const blob = dataURLtoBlob(d.data); const fname = docFileName(d, blob);
-  try { const file = new File([blob], fname, { type: blob.type }); if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: d.name }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+async function shareDoc(collection, i, side = 'front') {
+  const docFile = getDocFile(collection, i, side);
+  if (!docFile) { toast(normalizeDocSide(side) === 'back' ? 'No back uploaded yet' : 'No front uploaded yet'); return; }
+  const blob = dataURLtoBlob(docFile.data); const fname = docFileName(docFile, blob);
+  try { const file = new File([blob], fname, { type: blob.type }); if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: docFile.name }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
   try { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 60000); toast('Opened in a new tab'); return; } catch (e) {}
-  downloadDoc(collection, i);
+  downloadDoc(collection, i, side);
 }
 async function sharePetSummary(petId) {
   const p = petById(petId); if (!p) return;
@@ -2316,15 +2384,13 @@ function openDocMeta(collection, i) {
   const d = getDoc(collection, i);
   document.getElementById('d-name').value = d.name;
   document.getElementById('d-tag').value = d.tag || '';
-  setDocSide(docSide(d));
   openModal('docModal');
 }
 function saveDocMeta() {
   const d = getDoc(docCollection, docIndex);
   d.name = document.getElementById('d-name').value.trim() || d.name;
   d.tag = document.getElementById('d-tag').value.trim();
-  d.side = document.getElementById('d-side').value || 'other';
-  cacheLocal(docCollection); if (fb) fb.setDoc(fb.fileRef(d.id), { name: d.name, tag: d.tag, side: d.side }, { merge: true }).catch(err => { console.error(err); setSync('error', err); });
+  cacheLocal(docCollection); if (fb) fb.setDoc(fb.fileRef(d.id), { name: d.name, tag: d.tag }, { merge: true }).catch(err => { console.error(err); setSync('error', err); });
   renderDocs(); renderPets(); closeModal('docModal');
 }
 function delDoc(collection, i) {
